@@ -5,6 +5,9 @@ selected_type = null
 // A Uint8Array representing the underlying type
 bytes = null
 
+const BYTE_LIST_REGEX = /\[(?<inner>(?:(?:0[obx])?[0-9A-Fa-f]+,)*(?:0[obx])?[0-9A-Fa-f]+,?)\]/
+const BYTE_LIST_ELEMENT_REGEX = /(?<number>(?:0[obx])?[0-9A-Fa-f]+),?/g
+
 // Here we create a possible type map from name to conversion function.
 // Note: The order of this list is important as it is designed such that the more used conversions are listed first.
 // Since dictionaries aren't guaranteed to preserve order, a list of pairs is used instead 
@@ -15,18 +18,31 @@ const POSSIBLE_TYPES = [
 	["URL Decode", urldecode_to_bytes],
 	["Double float", f64_to_bytes],
 	["Single float", f32_to_bytes],
+	["Base2", base2_to_bytes],
+	["Base8", base8_to_bytes],
+	["Base16", base16_to_bytes],
+	["IPv4", ipv4_to_bytes],
+	["IPv6", ipv6_to_bytes],
+	["Byte List", bytelist_to_bytes],
+	["Date/Time", datetime_to_bytes],
 
 ];
 
 const CONVERSION_TYPES = [
-	["Base64", bytes_to_base64],
+	["Base 10", bytes_to_base10],
 	["Base 2", bytes_to_base2],
 	["Base 8", bytes_to_base8],
-	["Base 10", bytes_to_base10],
 	["Base 16", bytes_to_base16],
+	["Base64", bytes_to_base64],
 	["String", bytes_to_string],
 	["Byte List", bytes_to_bytelist],
-	["URL encode", bytes_to_urlencode]
+	["URL encode", bytes_to_urlencode],
+	["IPv4", bytes_to_ipv4],
+	["IPv6", bytes_to_ipv6],
+	["Unix time", bytes_to_unix],
+	["ISO 8601", bytes_to_unixiso],
+	["Double float", bytes_to_f64],
+	["Single float", bytes_to_f32],
 ];
 
 const POSSIBLE_LIST_ID = "posiblity_list"
@@ -59,7 +75,6 @@ function clear_selection() {
 
 //Called when the onclick even is raised in the items in the possibilities list
 function possibility_selected(possibility) {
-
 
 	for (possible_type of POSSIBLE_TYPES) {
 		if (possibility === possible_type[0]) {
@@ -106,6 +121,19 @@ function highlight(id) {
 
 }
 
+//Add padding zero bytes to array up to 'to' bytes
+function pad_to(array, to) {
+	a = array
+	if (a.length < to) {
+		diff = to - a.length
+		for (i = 0; i < diff; i++) {
+			a.push(0)
+		}
+	}
+
+	return a
+}
+
 //A list of conversions from string to Uint8Array by possible types
 function base64_to_bytes(string) {
 
@@ -117,7 +145,7 @@ function base64_to_bytes(string) {
 		array.push(byte.charCodeAt(0))
 	}
 
-	return array; ///"WIP"; //string_to_bytes(atob(string)) // atob converts Base64 to a byte array in string form, then to_string converts the string form into Uint8Array
+	return array;
 }
 
 function integer_to_bytes(string) {
@@ -127,6 +155,10 @@ function integer_to_bytes(string) {
 		return [0]
 	}
 
+	if (i < 0n) {
+		throw "Cannot convert"
+	}
+
 	array = []
 
 	while (i != 0n) {
@@ -134,7 +166,19 @@ function integer_to_bytes(string) {
 		i = i >> 8n
 	}
 
-	return new Uint8Array(array)
+	return array
+}
+
+function base2_to_bytes(string) {
+	return integer_to_bytes("0b" + string)
+}
+
+function base8_to_bytes(string) {
+	return integer_to_bytes("0o" + string)
+}
+
+function base16_to_bytes(string) {
+	return integer_to_bytes("0x" + string)
 }
 
 function string_to_bytes(string) {
@@ -145,7 +189,7 @@ function string_to_bytes(string) {
 		array.push(char.charCodeAt(0))
 	}
 
-	return new Uint8Array(array)
+	return array
 }
 
 function urldecode_to_bytes(string) {
@@ -162,7 +206,7 @@ function f64_to_bytes(string) {
 	var f64_arr = new Float64Array(1);
 	f64_arr[0] = f;
 
-	return new Uint8Array(f64_arr.buffer)
+	return Array.from(new Uint8Array(f64_arr.buffer))
 }
 
 function f32_to_bytes(string) {
@@ -175,7 +219,61 @@ function f32_to_bytes(string) {
 	var f32_arr = new Float32Array(1);
 	f32_arr[0] = f;
 
-	return new Uint8Array(f32_arr.buffer)
+	return Array.from(new Uint8Array(f32_arr.buffer))
+}
+
+function ipv4_to_bytes(string) {
+	
+	if (!ipaddr.IPv4.isValid(string)) {
+		throw "Cannot convert"
+	}
+	
+	return ipaddr.parse(string).toByteArray()
+}
+
+function ipv6_to_bytes(string) {
+	
+	if (!ipaddr.IPv6.isValid(string)) {
+		throw "Cannot convert"
+	}
+	
+	return ipaddr.parse(string).toByteArray()
+}
+
+function bytelist_to_bytes(string) {
+	string = string.replace(/\s/g, '')
+
+	result = BYTE_LIST_REGEX.exec(string)
+
+	arr = []
+
+	for (m of result["groups"]["inner"].matchAll(BYTE_LIST_ELEMENT_REGEX)) {
+		n = Number(m["groups"]["number"])
+		if (n > 255 || isNaN(n)) {
+			throw "Cannot convert"
+		}
+		arr.push(n)
+	}
+	
+	return arr
+}
+
+function datetime_to_bytes(string) {
+	epoch = Date.parse(string)
+
+	if (isNaN(epoch)) {
+		throw "Cannot convert"
+	}
+
+	thing = new BigInt64Array(1)
+	thing[0] = BigInt(epoch)
+
+
+	arr = Array.from(new Uint8Array(thing.buffer))
+
+
+	return arr
+
 }
 
 //A list of conversions from bytes to string by possible types
@@ -241,6 +339,54 @@ function bytes_to_bytelist(bytes) {
 
 function bytes_to_urlencode(bytes) {
 	return encodeURIComponent(bytes_to_string(bytes))
+}
+
+function bytes_to_ipv4(bytes) {
+
+	if (bytes.length > 4) {
+		throw "Cannot convert"
+	}
+
+	return ipaddr.fromByteArray(pad_to(bytes, 4)).toString()
+
+}
+
+function bytes_to_ipv6(bytes) {
+
+	if (bytes.length > 16) {
+		throw "Cannot convert"
+	}
+
+	return ipaddr.fromByteArray(pad_to(bytes, 16)).toString()
+
+}
+
+function bytes_to_unix(bytes) {
+	big = _bytes_to_bigint(bytes)
+
+	return new Date(Number(big))
+}
+
+function bytes_to_unixiso(bytes) {
+	big = _bytes_to_bigint(bytes)
+
+	return new Date(Number(big)).toISOString()
+}
+
+function bytes_to_f64(bytes) {
+	uint8arr = new Uint8Array(bytes)
+
+	f64arr = new Float64Array(uint8arr.buffer)
+
+	return f64arr[0].toString()
+}
+
+function bytes_to_f32(bytes) {
+	uint8arr = new Uint8Array(bytes)
+
+	f32arr = new Float32Array(uint8arr.buffer)
+
+	return f32arr[0].toString()
 }
 
 //Get a list of all possible types for the given string
