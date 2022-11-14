@@ -23,6 +23,11 @@ const POSSIBLE_TYPES = [
 	["Byte List", bytelist_to_bytes],
 	["Date/Time", datetime_to_bytes],
 	["UUID", uuid_to_bytes],
+	["i8", i8_to_bytes],
+	["i16", i16_to_bytes],
+	["i32", i32_to_bytes],
+	["i64", i64_to_bytes],
+	["C Escaped", c_escaped_to_bytes],
 
 ];
 
@@ -177,3 +182,118 @@ function uuid_to_bytes(string) {
 		throw "Cannot convert"
 	}
 }
+
+function _signed_to_bytes(string, t) {
+	n = Number(string)
+
+	b = new t(1)
+	b[0] = n
+
+
+	return Array.from(new Uint8Array(b.buffer))
+}
+
+function i8_to_bytes(string) {
+	return _signed_to_bytes(string, Int8Array)
+}
+
+function i16_to_bytes(string) {
+	return _signed_to_bytes(string, Int16Array)
+}
+
+function i32_to_bytes(string) {
+	return _signed_to_bytes(string, Int32Array)
+}
+
+function i64_to_bytes(string) {
+	n = BigInt(string)
+
+	b = new BigInt64Array(1)
+	b[0] = n
+
+
+	return Array.from(new Uint8Array(b.buffer))
+}
+
+function c_escaped_to_bytes(string) {
+	s = string
+
+	output = []
+
+	// Iterate over each unicode code point, If it's not ascii, cannot convert
+	for (char of Array.from(s)) {
+
+		code_point = char.charCodeAt(0)
+
+		if (code_point > 128) {
+			throw "Cannot convert"
+		}
+	}
+
+
+	for (i = 0; i < s.length; i++) {
+		char = s[i]
+		code = s.charCodeAt(i)
+
+		if (char == "\\") {
+			identifier = s[i+1]
+
+			if (identifier == "a") {
+				output.push(0x07)
+				i += 1
+			} else if (identifier == "b") {
+				output.push(0x08)
+				i += 1
+			} else if (identifier == "f") {
+				output.push(0x0C)
+				i += 1
+			} else if (identifier == "n") {
+				output.push(0x0A)
+				i += 1
+			} else if (identifier == "r") {
+				output.push(0x0D)
+				i += 1
+			} else if (identifier == "t") {
+				output.push(0x09)
+				i += 1
+			} else if (identifier == "v") {
+				output.push(0x0B)
+				i += 1
+			} else if (identifier == "\\") {
+				output.push(0x5C)
+				i += 1
+			} else if (identifier == "'") {
+				output.push(0x27)
+				i += 1
+			} else if (identifier == "\"") {
+				output.push(0x22)
+				i += 1
+			} else if (identifier == "x") {
+				n = Number("0x" + s.slice(i+2, i+4))
+
+				if (isNaN(n)) {
+					throw "Cannot convert"
+				}
+
+				output.push(n)
+				i += 3
+				
+			} else if (identifier == "u") {
+				throw "C Escaped: 'u' Not yet supported"
+			} else if (identifier == "U") {
+				throw "C Escaped: 'U' Not yet supported"
+			} else {
+				throw "Cannot convert"
+			}
+
+		} else {
+			output.push(code)
+		}
+
+	}
+
+	return output
+}
+
+
+

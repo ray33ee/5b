@@ -8,6 +8,20 @@ const POSSIBLE_LIST_ID = "posiblity_list"
 const INPUT_BOX_ID = "input"
 const CONVERSIONS_CONTAINER_ID = "conversions"
 
+// Courtesy of https://www.30secondsofcode.org/js/s/escape-html
+const escapeHTML = str =>
+  str.replace(
+    /[&<>'"]/g,
+    tag =>
+      ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        "'": '&#39;',
+        '"': '&quot;'
+      }[tag] || tag)
+  );
+
 function display_possibles() {
 
     document.getElementById(CONVERSIONS_CONTAINER_ID).innerHTML = "";
@@ -52,7 +66,7 @@ function possibility_selected(possibility) {
 		try {
 			converted = func(bytes)
 
-			table += '<tr style="height: 45px;"><td class="u-table-cell">' + name + '</td><td class="u-align-right u-table-cell u-text-palette-1-light-1 u-table-cell-8">' + converted + '</td></tr>'
+			table += '<tr style="height: 45px;"><td class="u-table-cell">' + name + '</td><td class="u-align-right u-table-cell u-text-palette-1-light-1 u-table-cell-8">' + escapeHTML(converted) + '</td></tr>'
 		} catch (err) {
 
 		}

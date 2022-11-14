@@ -14,8 +14,16 @@ const CONVERSION_TYPES = [
 	["Single float", bytes_to_f32],
 	["UUID", bytes_to_uuid],
 	["C Escaped", bytes_to_c_escaped],
-	["IPv4", bytes_to_ipv4],
+	//["MD5", bytes_to_md5],
+	["i8", bytes_to_i8],
+	["i16", bytes_to_i16],
+	["i32", bytes_to_i32],
+	["i64", bytes_to_i64],
+
+
+
 	["IPv6", bytes_to_ipv6],
+	["IPv4", bytes_to_ipv4],
 ];
 
 
@@ -61,9 +69,20 @@ function bytes_to_base16(bytes) {
 
 function bytes_to_string(bytes) {
 	
+
+	return _bytes_to_string(bytes, true)
+
+}
+
+function _bytes_to_string(bytes, check) {
+	
 	s = new String()
 
 	for (byte of bytes) {
+		if (check == true && !(byte >= 32 && byte < 127)) {
+			throw "Cannot convert"
+		}
+
 		s += String.fromCharCode(byte)
 	}
 
@@ -84,30 +103,29 @@ function bytes_to_bytelist(bytes) {
 }
 
 function bytes_to_urlencode(bytes) {
-	return encodeURIComponent(bytes_to_string(bytes))
+	return encodeURIComponent(_bytes_to_string(bytes, false))
+}
+
+function _bytes_to_ip(bytes, size) {
+	if (bytes.length > size) {
+		throw "Cannot convert"
+	}
+
+	return ipaddr.fromByteArray(pad_to(bytes, size)).toString()
 }
 
 function bytes_to_ipv4(bytes) {
 
-	if (bytes.length > 4) {
-		throw "Cannot convert"
-	}
-
-	return ipaddr.fromByteArray(pad_to(bytes, 4)).toString()
+	return _bytes_to_ip(bytes, 4)
 
 }
 
 function bytes_to_ipv6(bytes) {
-
-	if (bytes.length > 16) {
-		throw "Cannot convert"
-	}
-
-	return ipaddr.fromByteArray(pad_to(bytes, 16)).toString()
+	return _bytes_to_ip(bytes, 16)
 
 }
 
-function bytes_to_unix(bytes) {
+function _bytes_to_date(bytes) {
 	big = _bytes_to_bigint(bytes)
 
 	data = new Date(Number(big))
@@ -119,32 +137,31 @@ function bytes_to_unix(bytes) {
 	return data
 }
 
+function bytes_to_unix(bytes) {
+	return String(_bytes_to_date(bytes))
+
+}
+
 function bytes_to_unixiso(bytes) {
-	big = _bytes_to_bigint(bytes)
+	return _bytes_to_date(bytes).toISOString()
+}
 
-	data = new Date(Number(big))
+function _bytes_to_float(bytes, t) {
+	uint8arr = new Uint8Array(bytes)
 
-	if (isNaN(data)) {
-		throw "Cannot convert"
-	}
+	f = new t(uint8arr.buffer)
 
-	return data.toISOString()
+	return f[0].toString()
 }
 
 function bytes_to_f64(bytes) {
-	uint8arr = new Uint8Array(bytes)
 
-	f64arr = new Float64Array(uint8arr.buffer)
-
-	return f64arr[0].toString()
+	return _bytes_to_float(bytes, Float64Array)
 }
 
 function bytes_to_f32(bytes) {
-	uint8arr = new Uint8Array(bytes)
 
-	f32arr = new Float32Array(uint8arr.buffer)
-
-	return f32arr[0].toString()
+	return _bytes_to_float(bytes, Float32Array)
 }
 
 function bytes_to_uuid(bytes) {
@@ -164,74 +181,64 @@ function bytes_to_uuid(bytes) {
 }
 
 function bytes_to_c_escaped(bytes) {
-	
-	url_encoded = encodeURI(bytes_to_string(bytes))
+	str = ""
 
-	out = []
-
-	for (i = 0; i < url_encoded.length; i++) {
-		char_code = url_encoded.charCodeAt(i)
-		char = url_encoded[i]
-
-
-		if (char_code == 0x25) {
-			percent_code = url_encoded.slice(i+1, i+3)
-			percent_number = Number("0x" + percent_code)
-
-			// If the character is printable
-			if (percent_number >= 32 && percent_number < 127) {
-
-				if (percent_number == 0x5c) {
-					out += "\\\\"
-				} else if (percent_number == 0x22) {
-					out += "\\\""
-				} else {
-					out += String.fromCharCode(percent_number)
-				}
-
-				
-			} else {
-
-				escape_sequence = ""
-
-				if (percent_number == 0x00) {
-					escape_sequence = "\\0"
-				} else if (percent_number == 0x07) {
-					escape_sequence = "\\a"
-				} else if (percent_number == 0x08) {
-					escape_sequence = "\\b"
-				} else if (percent_number == 0x0C) {
-					escape_sequence = "\\f"
-				} else if (percent_number == 0x0A) {
-					escape_sequence = "\\n"
-				} else if (percent_number == 0x0D) {
-					escape_sequence = "\\r"
-				} else if (percent_number == 0x09) {
-					escape_sequence = "\\t"
-				} else if (percent_number == 0x0b) {
-					escape_sequence = "\\v"
-				} else {
-					escape_sequence = "\\x" + percent_code
-				}
-
-				out += escape_sequence
-			}
-
-			i = i + 2
+	for (byte of bytes) {
+		if (byte == 0x07) {
+			str += "\\a"
+		} else if (byte == 0x08) {
+			str += "\\b"
+		} else if (byte == 0x0C) {
+			str += "\\f"
+		} else if (byte == 0x0A) {
+			str += "\\n"
+		} else if (byte == 0x0D) {
+			str += "\\r"
+		} else if (byte == 0x09) {
+			str += "\\t"
+		} else if (byte == 0x0B) {
+			str += "\\v"
+		} else if (byte == 0x5C) {
+			str += "\\\\"
+		} else if (byte == 0x27) {
+			str += "\\'"
+		} else if (byte == 0x22) {
+			str += "\\\""
+		} else if (byte >= 32 && byte < 127) {
+			str += String.fromCharCode(byte)
 		} else {
-
-			if (char_code == 0x27) {
-				out += "\\'"
-			} else {
-
-				out += char
-			}
+			str += "\\x" + byte.toString(16)
 		}
-
-		
-
 	}
 
-	return out
-	
+	return str
+}
+
+function bytes_to_md5(bytes) {
+	return md5(bytes)
+}
+
+function _bytes_to_signed(bytes, t, pad) {
+
+	uint8arr = new Uint8Array(pad_to(bytes, pad))
+
+	b = new t(uint8arr.buffer)
+
+	return b[0].toString()
+}
+
+function bytes_to_i8(bytes) {
+	return _bytes_to_signed(bytes, Int8Array, 1)
+}
+
+function bytes_to_i16(bytes) {
+	return _bytes_to_signed(bytes, Int16Array, 2)
+}
+
+function bytes_to_i32(bytes) {
+	return _bytes_to_signed(bytes, Int32Array, 4)
+}
+
+function bytes_to_i64(bytes) {
+	return _bytes_to_signed(bytes, BigInt64Array, 8)
 }
