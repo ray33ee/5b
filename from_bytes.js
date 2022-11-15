@@ -20,6 +20,11 @@ const CONVERSION_TYPES = [
 	["i32", bytes_to_i32],
 	["i64", bytes_to_i64],
 
+	["u8", bytes_to_u8],
+	["u16", bytes_to_u16],
+	["u32", bytes_to_u32],
+	["u64", bytes_to_u64],
+
 
 
 	["IPv6", bytes_to_ipv6],
@@ -107,11 +112,13 @@ function bytes_to_urlencode(bytes) {
 }
 
 function _bytes_to_ip(bytes, size) {
-	if (bytes.length > size) {
+
+	if (bytes.length != size) {
 		throw "Cannot convert"
 	}
 
 	return ipaddr.fromByteArray(pad_to(bytes, size)).toString()
+
 }
 
 function bytes_to_ipv4(bytes) {
@@ -126,6 +133,11 @@ function bytes_to_ipv6(bytes) {
 }
 
 function _bytes_to_date(bytes) {
+
+	if (bytes.length != 8) {
+		throw "Cannot convert"
+	}
+
 	big = _bytes_to_bigint(bytes)
 
 	data = new Date(Number(big))
@@ -220,6 +232,10 @@ function bytes_to_md5(bytes) {
 
 function _bytes_to_signed(bytes, t, pad) {
 
+	if (pad != bytes.length) {
+		throw "Cannot convert"
+	}
+
 	uint8arr = new Uint8Array(pad_to(bytes, pad))
 
 	b = new t(uint8arr.buffer)
@@ -241,4 +257,20 @@ function bytes_to_i32(bytes) {
 
 function bytes_to_i64(bytes) {
 	return _bytes_to_signed(bytes, BigInt64Array, 8)
+}
+
+function bytes_to_u8(bytes) {
+	return _bytes_to_signed(bytes, Uint8Array, 1)
+}
+
+function bytes_to_u16(bytes) {
+	return _bytes_to_signed(bytes, Uint16Array, 2)
+}
+
+function bytes_to_u32(bytes) {
+	return _bytes_to_signed(bytes, Uint32Array, 4)
+}
+
+function bytes_to_u64(bytes) {
+	return _bytes_to_signed(bytes, BigUint64Array, 8)
 }

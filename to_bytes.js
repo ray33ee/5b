@@ -27,6 +27,10 @@ const POSSIBLE_TYPES = [
 	["i16", i16_to_bytes],
 	["i32", i32_to_bytes],
 	["i64", i64_to_bytes],
+	["u8", u8_to_bytes],
+	["u16", u16_to_bytes],
+	["u32", u32_to_bytes],
+	["u64", u64_to_bytes],
 	["C Escaped", c_escaped_to_bytes],
 
 ];
@@ -209,6 +213,28 @@ function i64_to_bytes(string) {
 	n = BigInt(string)
 
 	b = new BigInt64Array(1)
+	b[0] = n
+
+
+	return Array.from(new Uint8Array(b.buffer))
+}
+
+function u8_to_bytes(string) {
+	return _signed_to_bytes(string, Uint8Array)
+}
+
+function u16_to_bytes(string) {
+	return _signed_to_bytes(string, Uint16Array)
+}
+
+function u32_to_bytes(string) {
+	return _signed_to_bytes(string, Uint32Array)
+}
+
+function u64_to_bytes(string) {
+	n = BigInt(string)
+
+	b = new BigUint64Array(1)
 	b[0] = n
 
 

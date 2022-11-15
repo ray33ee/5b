@@ -96,6 +96,9 @@ function highlight(id) {
 
 //Add padding zero bytes to array up to 'to' bytes
 function pad_to(array, to) {
+
+	return array
+
 	a = array
 	if (a.length < to) {
 		diff = to - a.length
