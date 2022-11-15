@@ -22,6 +22,11 @@ const escapeHTML = str =>
       }[tag] || tag)
   );
 
+function copy_data(data) {
+	console.log(data)
+	navigator.clipboard.writeText(data);
+}
+
 function display_possibles() {
 
     document.getElementById(CONVERSIONS_CONTAINER_ID).innerHTML = "";
@@ -57,7 +62,7 @@ function possibility_selected(possibility) {
 
 	bytes = selected_type[1](document.getElementById(INPUT_BOX_ID).value)
 
-	table = '<div class="u-align-center u-table u-table-responsive u-table-2"><table style="table-layout: fixed; width: 100%" ><colgroup><col width="29.87%"><col width="70.13%"></colgroup><tbody class="u-table-body">'
+	table = '<div class="u-align-center u-table u-table-responsive u-table-2"><table style="table-layout: fixed; width: 100%" ><colgroup><col width="25.87%"><col width="70.13%"></colgroup><tbody class="u-table-body">'
 
 	for (conversion_type of CONVERSION_TYPES) {
 		name = conversion_type[0]
@@ -66,7 +71,7 @@ function possibility_selected(possibility) {
 		try {
 			converted = func(bytes)
 
-			table += '<tr style="height: 45px;"><td class="u-table-cell">' + name + '</td><td class="u-align-right u-table-cell u-text-palette-1-light-1 u-table-cell-8">' + escapeHTML(converted) + '</td></tr>'
+			table += '<tr style="height: 45px;"><td class="u-table-cell">' + name + '</td><td class="u-align-right u-table-cell u-text-palette-1-light-1 u-table-cell-8">' + escapeHTML(converted) + '</td><td class="u-table-cell"><img src="./images/copy.png" onclick="copy_data(\'' + converted + '\')"></td></tr>'
 		} catch (err) {
 
 		}
