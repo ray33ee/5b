@@ -23,7 +23,6 @@ const escapeHTML = str =>
   );
 
 function copy_data(data) {
-	console.log(data)
 	navigator.clipboard.writeText(data);
 }
 
@@ -32,6 +31,9 @@ function display_possibles() {
     document.getElementById(CONVERSIONS_CONTAINER_ID).innerHTML = "";
 
     input = possibilities(document.getElementById(INPUT_BOX_ID).value);
+
+	document.getElementById(CONVERSIONS_CONTAINER_ID).style.backgroundColor  = "#292d33"
+	
 
     document.getElementById(POSSIBLE_LIST_ID).innerHTML = "";
     for (p of input)
@@ -46,9 +48,7 @@ function clear_selection() {
 
     document.getElementById(INPUT_BOX_ID).value = "";
 
-    document.getElementById(POSSIBLE_LIST_ID).innerHTML = "";
-
-    document.getElementById(CONVERSIONS_CONTAINER_ID).innerHTML = "";
+    display_possibles()
 }
 
 //Called when the onclick even is raised in the items in the possibilities list
@@ -79,7 +79,14 @@ function possibility_selected(possibility) {
 
 	table += '</tbody></table></div>'
 
-	document.getElementById(CONVERSIONS_CONTAINER_ID).innerHTML = table
+	conversions_container = document.getElementById(CONVERSIONS_CONTAINER_ID)
+
+	conversions_container.innerHTML = table
+
+	conversions_container.scrollIntoView()
+
+	document.getElementById(CONVERSIONS_CONTAINER_ID).style.backgroundColor  = "#555c66"
+	
   	
 }
 
