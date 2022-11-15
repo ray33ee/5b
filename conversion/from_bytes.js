@@ -4,31 +4,54 @@ const CONVERSION_TYPES = [
 	["Base 2", bytes_to_base2],
 	["Base 8", bytes_to_base8],
 	["Base 16", bytes_to_base16],
+
+	[SEPARATOR],
+
 	["Base64", bytes_to_base64],
+
+	[SEPARATOR],
+
 	["String", bytes_to_string],
 	["Byte List", bytes_to_bytelist],
+
+	[SEPARATOR],
+
 	["URL encode", bytes_to_urlencode],
+	["C Escaped", bytes_to_c_escaped],
+
+	[SEPARATOR],
+
 	["Unix time", bytes_to_unix],
 	["ISO 8601", bytes_to_unixiso],
+
+	[SEPARATOR],
+
 	["Double float", bytes_to_f64],
 	["Single float", bytes_to_f32],
-	["UUID", bytes_to_uuid],
-	["C Escaped", bytes_to_c_escaped],
-	//["MD5", bytes_to_md5],
+
+	[SEPARATOR],
+
+
+
 	["i8", bytes_to_i8],
 	["i16", bytes_to_i16],
 	["i32", bytes_to_i32],
 	["i64", bytes_to_i64],
+
+	[SEPARATOR],
 
 	["u8", bytes_to_u8],
 	["u16", bytes_to_u16],
 	["u32", bytes_to_u32],
 	["u64", bytes_to_u64],
 
+	[SEPARATOR],
+
 
 
 	["IPv6", bytes_to_ipv6],
 	["IPv4", bytes_to_ipv4],
+	["UUID", bytes_to_uuid],
 ];
 
 
@@ -85,11 +108,14 @@ function _bytes_to_string(bytes, check) {
 
 	for (byte of bytes) {
 		if (check == true && !(byte >= 32 && byte < 127)) {
-			throw "Cannot convert"
+			throw new FromBytesError(bytes, "string", "String contains unprintable characters (outside 32-126 range)")
 		}
 
 		s += String.fromCharCode(byte)
 	}
+
+	//
+	bytes_to_bytelist(bytes)
 
 	return utf8.decode(s)
 
@@ -114,7 +140,7 @@ function bytes_to_urlencode(bytes) {
 function _bytes_to_ip(bytes, size) {
 
 	if (bytes.length != size) {
-		throw "Cannot convert"
+		throw new FromBytesError(bytes, "ipaddr", "Byte length not supposted (tried " + size + " byte ip against " + bytes.length + " byte list.)" )
 	}
 
 	return ipaddr.fromByteArray(pad_to(bytes, size)).toString()
@@ -135,7 +161,7 @@ function bytes_to_ipv6(bytes) {
 function _bytes_to_date(bytes) {
 
 	if (bytes.length != 8) {
-		throw "Cannot convert"
+		throw new FromBytesError(bytes, "date", "Could not convert " + bytes.length + " bytes into date (must be 8 bytes)")
 	}
 
 	big = _bytes_to_bigint(bytes)
@@ -143,7 +169,7 @@ function _bytes_to_date(bytes) {
 	data = new Date(Number(big))
 
 	if (isNaN(data)) {
-		throw "Cannot convert"
+		throw new FromBytesError(bytes, "date", "Invalid date")
 	}
 
 	return data
@@ -158,7 +184,12 @@ function bytes_to_unixiso(bytes) {
 	return _bytes_to_date(bytes).toISOString()
 }
 
-function _bytes_to_float(bytes, t) {
+function _bytes_to_float(bytes, t, size) {
+
+	if (bytes.length != size) {
+		throw new FromBytesError(bytes, "date", "Could not convert " + bytes.length + " bytes into " + size + " byte float")
+	}
+
 	uint8arr = new Uint8Array(bytes)
 
 	f = new t(uint8arr.buffer)
@@ -168,12 +199,12 @@ function _bytes_to_float(bytes, t) {
 
 function bytes_to_f64(bytes) {
 
-	return _bytes_to_float(bytes, Float64Array)
+	return _bytes_to_float(bytes, Float64Array, 8)
 }
 
 function bytes_to_f32(bytes) {
 
-	return _bytes_to_float(bytes, Float32Array)
+	return _bytes_to_float(bytes, Float32Array,4)
 }
 
 function bytes_to_uuid(bytes) {
@@ -230,10 +261,10 @@ function bytes_to_md5(bytes) {
 	return md5(bytes)
 }
 
-function _bytes_to_signed(bytes, t, pad) {
+function _bytes_to_primitive(bytes, t, pad) {
 
 	if (pad != bytes.length) {
-		throw "Cannot convert"
+		throw new FromBytesError(bytes, "signed", "Could not convert " + bytes.length + " byte list into " + pad + " byte int")
 	}
 
 	uint8arr = new Uint8Array(pad_to(bytes, pad))
@@ -244,33 +275,33 @@ function _bytes_to_signed(bytes, t, pad) {
 }
 
 function bytes_to_i8(bytes) {
-	return _bytes_to_signed(bytes, Int8Array, 1)
+	return _bytes_to_primitive(bytes, Int8Array, 1)
 }
 
 function bytes_to_i16(bytes) {
-	return _bytes_to_signed(bytes, Int16Array, 2)
+	return _bytes_to_primitive(bytes, Int16Array, 2)
 }
 
 function bytes_to_i32(bytes) {
-	return _bytes_to_signed(bytes, Int32Array, 4)
+	return _bytes_to_primitive(bytes, Int32Array, 4)
 }
 
 function bytes_to_i64(bytes) {
-	return _bytes_to_signed(bytes, BigInt64Array, 8)
+	return _bytes_to_primitive(bytes, BigInt64Array, 8)
 }
 
 function bytes_to_u8(bytes) {
-	return _bytes_to_signed(bytes, Uint8Array, 1)
+	return _bytes_to_primitive(bytes, Uint8Array, 1)
 }
 
 function bytes_to_u16(bytes) {
-	return _bytes_to_signed(bytes, Uint16Array, 2)
+	return _bytes_to_primitive(bytes, Uint16Array, 2)
 }
 
 function bytes_to_u32(bytes) {
-	return _bytes_to_signed(bytes, Uint32Array, 4)
+	return _bytes_to_primitive(bytes, Uint32Array, 4)
 }
 
 function bytes_to_u64(bytes) {
-	return _bytes_to_signed(bytes, BigUint64Array, 8)
+	return _bytes_to_primitive(bytes, BigUint64Array, 8)
 }

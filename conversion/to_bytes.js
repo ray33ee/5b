@@ -38,7 +38,11 @@ const POSSIBLE_TYPES = [
 
 function base64_to_bytes(string) {
 
-	decode = atob(string)
+	try {
+		decode = atob(string)
+	} catch (err) {
+		throw new ToBytesError(string, "base64", String(err))
+	}
 
 	array = []
 
@@ -50,14 +54,18 @@ function base64_to_bytes(string) {
 }
 
 function integer_to_bytes(string) {
-	i = BigInt(string)
+	try {
+		i = BigInt(string)
+	} catch (err) {
+		throw new ToBytesError(string, "bigint", String(err))
+	}
 
 	if (i == 0n) {
 		return [0]
 	}
 
 	if (i < 0n) {
-		throw "Cannot convert"
+		throw new ToBytesError(string, "bigint", "Big int cannot be used for negative numbers, as fixed width primitives should be used instead (i8, i16, etc.)")
 	}
 
 	array = []
@@ -98,44 +106,37 @@ function urldecode_to_bytes(string) {
 }
 
 function f64_to_bytes(string) {
-	f = Number(string)
-
-	if (isNaN(f) && string != "NaN") {
-		throw "Cannot convert string to f64"
-	}
-
-	var f64_arr = new Float64Array(1);
-	f64_arr[0] = f;
-
-	return Array.from(new Uint8Array(f64_arr.buffer))
+	return _float_to_bytes(string, Float64Array)
 }
 
 function f32_to_bytes(string) {
+	return _float_to_bytes(string, Float32Array)
+}
+
+function _float_to_bytes(string, type) {
 	f = Number(string)
 
 	if (isNaN(f) && string != "NaN") {
-		throw "Cannot convert string to f64"
+		throw new ToBytesError(string, "float", "Invalid float")
 	}
 
-	var f32_arr = new Float32Array(1);
-	f32_arr[0] = f;
+	var fa = new type(1);
+	fa[0] = f;
 
-	return Array.from(new Uint8Array(f32_arr.buffer))
+	return Array.from(new Uint8Array(fa.buffer))
 }
 
 function ipv4_to_bytes(string) {
-	
-	if (!ipaddr.IPv4.isValid(string)) {
-		throw "Cannot convert"
-	}
-	
-	return ipaddr.parse(string).toByteArray()
+	return _ipaddr_to_bytes(string, ipaddr.IPv4)
 }
 
 function ipv6_to_bytes(string) {
-	
-	if (!ipaddr.IPv6.isValid(string)) {
-		throw "Cannot convert"
+	return _ipaddr_to_bytes(string, ipaddr.IPv6)
+}
+
+function _ipaddr_to_bytes(string, type) {
+	if (!type.isValid(string)) {
+		throw  new ToBytesError(string, "ipaddr", "String is not a valid address")
 	}
 	
 	return ipaddr.parse(string).toByteArray()
@@ -148,10 +149,14 @@ function bytelist_to_bytes(string) {
 
 	arr = []
 
+	if (result == null) {
+		throw new ToBytesError(string, "bytelist", "String is not compatible with byte list regex")
+	}
+
 	for (m of result["groups"]["inner"].matchAll(BYTE_LIST_ELEMENT_REGEX)) {
 		n = Number(m["groups"]["number"])
 		if (n > 255 || isNaN(n)) {
-			throw "Cannot convert"
+			throw new ToBytesError(string, "byte list", "Byte list element is either not a u8 or not a valid number")
 		}
 		arr.push(n)
 	}
@@ -163,7 +168,7 @@ function datetime_to_bytes(string) {
 	epoch = Date.parse(string)
 
 	if (isNaN(epoch)) {
-		throw "Cannot convert"
+		throw new ToBytesError(string, "date", "String is not a valid date")
 	}
 
 	thing = new BigInt64Array(1)
@@ -183,12 +188,16 @@ function uuid_to_bytes(string) {
 
 		return base16_to_bytes(string)
 	} else {
-		throw "Cannot convert"
+		throw new ToBytesError(string, "ipaddr", "String is not a valid UUID format")
 	}
 }
 
-function _signed_to_bytes(string, t) {
+function _primitive_to_bytes(string, t) {
 	n = Number(string)
+
+	if (isNaN(f)) {
+		throw new ToBytesError(string, "primitive", "Invalid primitive")
+	}
 
 	b = new t(1)
 	b[0] = n
@@ -198,19 +207,23 @@ function _signed_to_bytes(string, t) {
 }
 
 function i8_to_bytes(string) {
-	return _signed_to_bytes(string, Int8Array)
+	return _primitive_to_bytes(string, Int8Array)
 }
 
 function i16_to_bytes(string) {
-	return _signed_to_bytes(string, Int16Array)
+	return _primitive_to_bytes(string, Int16Array)
 }
 
 function i32_to_bytes(string) {
-	return _signed_to_bytes(string, Int32Array)
+	return _primitive_to_bytes(string, Int32Array)
 }
 
 function i64_to_bytes(string) {
-	n = BigInt(string)
+	try {
+		n = BigInt(string)
+	} catch (err) {
+		throw new ToBytesError(string, "i64", String(err))
+	}
 
 	b = new BigInt64Array(1)
 	b[0] = n
@@ -220,19 +233,23 @@ function i64_to_bytes(string) {
 }
 
 function u8_to_bytes(string) {
-	return _signed_to_bytes(string, Uint8Array)
+	return _primitive_to_bytes(string, Uint8Array)
 }
 
 function u16_to_bytes(string) {
-	return _signed_to_bytes(string, Uint16Array)
+	return _primitive_to_bytes(string, Uint16Array)
 }
 
 function u32_to_bytes(string) {
-	return _signed_to_bytes(string, Uint32Array)
+	return _primitive_to_bytes(string, Uint32Array)
 }
 
 function u64_to_bytes(string) {
-	n = BigInt(string)
+	try {
+		n = BigInt(string)
+	} catch (err) {
+		throw new ToBytesError(string, "u64", String(err))
+	}
 
 	b = new BigUint64Array(1)
 	b[0] = n
@@ -252,7 +269,7 @@ function c_escaped_to_bytes(string) {
 		code_point = char.charCodeAt(0)
 
 		if (code_point > 128) {
-			throw "Cannot convert"
+			throw new ToBytesError(string, "c escaped", "C escaped strings must only contain ascii characters")
 		}
 	}
 
@@ -298,7 +315,7 @@ function c_escaped_to_bytes(string) {
 				n = Number("0x" + s.slice(i+2, i+4))
 
 				if (isNaN(n)) {
-					throw "Cannot convert"
+					throw new ToBytesError(string, "c escaped", "Invalid escape character: \\x escape did not contain a valid number")
 				}
 
 				output.push(n)
@@ -309,7 +326,7 @@ function c_escaped_to_bytes(string) {
 			} else if (identifier == "U") {
 				throw "C Escaped: 'U' Not yet supported"
 			} else {
-				throw "Cannot convert"
+				throw new ToBytesError(string, "c escaped", "Invalid escape character (" + identifier + ")")
 			}
 
 		} else {
