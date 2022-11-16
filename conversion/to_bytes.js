@@ -9,29 +9,29 @@ const UUID_REGEX = /[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-
 // Note: The order of this list is important as it is designed such that the more used conversions are listed first.
 // Since dictionaries aren't guaranteed to preserve order, a list of pairs is used instead 
 const POSSIBLE_TYPES = [
-	["Base64", base64_to_bytes],
-	["Integer", integer_to_bytes],
-	["String", string_to_bytes],
-	["URL Decode", urldecode_to_bytes],
-	["Double float", f64_to_bytes],
-	["Single float", f32_to_bytes],
-	["Base2", base2_to_bytes],
-	["Base8", base8_to_bytes],
-	["Base16", base16_to_bytes],
-	["IPv4", ipv4_to_bytes],
-	["IPv6", ipv6_to_bytes],
-	["Byte List", bytelist_to_bytes],
-	["Date/Time", datetime_to_bytes],
-	["UUID", uuid_to_bytes],
-	["i8", i8_to_bytes],
-	["i16", i16_to_bytes],
-	["i32", i32_to_bytes],
-	["i64", i64_to_bytes],
-	["u8", u8_to_bytes],
-	["u16", u16_to_bytes],
-	["u32", u32_to_bytes],
-	["u64", u64_to_bytes],
-	["C Escaped", c_escaped_to_bytes],
+	["Base64", base64_to_bytes, false],
+	["Integer", integer_to_bytes, true],
+	["UTF-16 String", utf16string_to_bytes, false],
+	["URL Decode", urldecode_to_bytes, false],
+	["Double float", f64_to_bytes, false],
+	["Single float", f32_to_bytes, false],
+	["Base2", base2_to_bytes, true],
+	["Base8", base8_to_bytes, true],
+	["Base16", base16_to_bytes, true],
+	["IPv4", ipv4_to_bytes, false],
+	["IPv6", ipv6_to_bytes, false],
+	["Byte List", bytelist_to_bytes, false],
+	["Date/Time", datetime_to_bytes, false],
+	["UUID", uuid_to_bytes, false],
+	["i8", i8_to_bytes, false],
+	["i16", i16_to_bytes, false],
+	["i32", i32_to_bytes, false],
+	["i64", i64_to_bytes, false],
+	["u8", u8_to_bytes, true],
+	["u16", u16_to_bytes, true],
+	["u32", u32_to_bytes, true],
+	["u64", u64_to_bytes, true],
+	["C Escaped", c_escaped_to_bytes, false],
 
 ];
 
@@ -90,19 +90,26 @@ function base16_to_bytes(string) {
 	return integer_to_bytes("0x" + string)
 }
 
-function string_to_bytes(string) {
-	string = utf8.encode(string)
+function utf16string_to_bytes(string) {
 	array = []
 
 	for (char of string) {
 		array.push(char.charCodeAt(0))
 	}
 
-	return array
+	a = new Uint16Array(array)
+
+	return Array.from(new Uint8Array(a.buffer))
 }
 
 function urldecode_to_bytes(string) {
-	return string_to_bytes(decodeURIComponent(string))
+
+	try {
+		d = decodeURIComponent(string)
+	} catch (err) {
+		throw new ToBytesError(string, "url decode", err)
+	}
+	return utf16string_to_bytes(d)
 }
 
 function f64_to_bytes(string) {
@@ -195,7 +202,9 @@ function uuid_to_bytes(string) {
 function _primitive_to_bytes(string, t) {
 	n = Number(string)
 
-	if (isNaN(f)) {
+
+
+	if (isNaN(n)) {
 		throw new ToBytesError(string, "primitive", "Invalid primitive")
 	}
 
@@ -283,33 +292,42 @@ function c_escaped_to_bytes(string) {
 
 			if (identifier == "a") {
 				output.push(0x07)
+				output.push(0x00)
 				i += 1
 			} else if (identifier == "b") {
 				output.push(0x08)
+				output.push(0x00)
 				i += 1
 			} else if (identifier == "f") {
 				output.push(0x0C)
+				output.push(0x00)
 				i += 1
 			} else if (identifier == "n") {
 				output.push(0x0A)
+				output.push(0x00)
 				i += 1
 			} else if (identifier == "r") {
 				output.push(0x0D)
+				output.push(0x00)
 				i += 1
 			} else if (identifier == "t") {
 				output.push(0x09)
+				output.push(0x00)
 				i += 1
 			} else if (identifier == "v") {
 				output.push(0x0B)
 				i += 1
 			} else if (identifier == "\\") {
 				output.push(0x5C)
+				output.push(0x00)
 				i += 1
 			} else if (identifier == "'") {
 				output.push(0x27)
+				output.push(0x00)
 				i += 1
 			} else if (identifier == "\"") {
 				output.push(0x22)
+				output.push(0x00)
 				i += 1
 			} else if (identifier == "x") {
 				n = Number("0x" + s.slice(i+2, i+4))
@@ -322,7 +340,16 @@ function c_escaped_to_bytes(string) {
 				i += 3
 				
 			} else if (identifier == "u") {
-				throw "C Escaped: 'u' Not yet supported"
+				high = Number("0x" + s.slice(i+2, i+4))
+				low = Number("0x" + s.slice(i+4, i+6))
+
+				if (isNaN(low) || isNaN(high) ) {
+					throw new ToBytesError(string, "c escaped", "Invalid escape character: \\u escape did not contain a valid number")
+				}
+
+				output.push(low)
+				output.push(high)
+				i += 5
 			} else if (identifier == "U") {
 				throw "C Escaped: 'U' Not yet supported"
 			} else {

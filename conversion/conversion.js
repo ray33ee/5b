@@ -10,6 +10,7 @@ const CONVERSIONS_CONTAINER_ID = "conversions"
 
 const SEPARATOR = "__SEPARATOR__"
 
+
 var $_GET = {};
 
 //Courtesy of https://www.ideasandpixels.com/articles/get-post-variables-with-javascript/
@@ -36,35 +37,68 @@ const escapeHTML = str =>
   );
 
 function process_get() {
-	input = $_GET["input"]
+	if ("input" in $_GET) {
+		input = $_GET["input"]
 
-	document.getElementById(INPUT_BOX_ID).value = input
+		document.getElementById(INPUT_BOX_ID).value = input
 
-	display_possibles()
+		display_possibles()
 
-	if ("selected" in $_GET && input != "") {
+		if ("selected" in $_GET && input != "") {
 
-		selected = $_GET["selected"]
-		possibility_selected(selected)
+			selected = $_GET["selected"]
+			possibility_selected(selected)
+		}
 	}
 
+}
 
+function get_link() {
+	params = ""
+	text = document.getElementById(INPUT_BOX_ID).value
+	if (text != "") {
+		params += "?input=" + encodeURIComponent(text)
+
+		if (selected_type != null) {
+			params += "&selected=" + encodeURIComponent(selected_type[0])
+		}
+
+	}
+
+	return params
 }
 
 function copy_data(data) {
 	navigator.clipboard.writeText(data);
 }
 
+function get_unicode_name(code) {
+	lookup = UNICODE_NAME_LIST.slice(UNICODE_INDICES_LIST[code], UNICODE_INDICES_LIST[code+1])
+	if (lookup == "") {
+		return "unknown"
+	} else {
+		return lookup
+	}
+}
+
 function display_possibles() {
+
+		selected_type = null
 
     document.getElementById(CONVERSIONS_CONTAINER_ID).innerHTML = "";
 
-    input = possibilities(document.getElementById(INPUT_BOX_ID).value);
+    text = document.getElementById(INPUT_BOX_ID).value
 
-	document.getElementById(CONVERSIONS_CONTAINER_ID).style.backgroundColor  = "#292d33"
+    input = possibilities(text);
+
+		document.getElementById(CONVERSIONS_CONTAINER_ID).style.backgroundColor  = "#292d33"
 	
+		if (text != "") {
+    	document.getElementById(POSSIBLE_LIST_ID).innerHTML = "<hr>";
+		} else {
+			document.getElementById(POSSIBLE_LIST_ID).innerHTML = ""
+		}
 
-    document.getElementById(POSSIBLE_LIST_ID).innerHTML = "";
     for (p of input)
     {
       document.getElementById(POSSIBLE_LIST_ID).innerHTML += "<h6 id=\"" + p + "\" onmouseover=\"highlight('" + p + "')\" onclick=\"possibility_selected('" + p + "')\">" + p + "</h6>";
@@ -98,6 +132,7 @@ function possibility_selected(possibility) {
 	for (conversion_type of CONVERSION_TYPES) {
 		name = conversion_type[0]
 		func = conversion_type[1]
+		pad_to = conversion_type[2]
 
 		if (conversion_type.length == 1 && conversion_type[0] == SEPARATOR) {
 
@@ -112,7 +147,13 @@ function possibility_selected(possibility) {
 			//table += '<tr style="height: 45px;"><td class="u-table-cell"></td><td class="u-table-cell"><hr></td></tr>'
 		} else {
 			try {
-				converted = func(bytes)
+
+				if (selected_type[2] == true && pad != null) {
+
+					converted = func(reverse(pad(bytes, pad_to)))
+				} else {
+					converted = func(reverse(bytes))
+				}
 
 				table += '<tr style="height: 45px;"><td class="u-table-cell">' + name + '</td><td class="u-align-right u-table-cell u-text-palette-1-light-1 u-table-cell-8">' + escapeHTML(converted) + '</td><td class="u-table-cell"><img src="./images/copy.png" onclick="copy_data(\'' + converted + '\')"></td></tr>'
 
@@ -162,12 +203,29 @@ function highlight(id) {
 
 }
 
+//Reverse the bytes, only if the endianness requires it though
+function reverse(bytes) {
+	a = []
+
+	//Create a deep copy of bytes
+	for (i=0; i < bytes.length; i++) {
+		a.push(bytes[i])
+	}
+
+	return a
+}
+
 //Add padding zero bytes to array up to 'to' bytes
-function pad_to(array, to) {
+function pad(bytes, to) {
 
-	return array
+	a = []
 
-	/*a = array
+	//Create a deep copy of bytes
+	for (b of bytes) {
+		a.push(b)
+	}
+
+	// Pad bytes if needed
 	if (a.length < to) {
 		diff = to - a.length
 		for (i = 0; i < diff; i++) {
@@ -175,7 +233,7 @@ function pad_to(array, to) {
 		}
 	}
 
-	return a*/
+	return a
 }
 
 

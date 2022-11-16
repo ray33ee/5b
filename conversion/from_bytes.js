@@ -1,57 +1,59 @@
 
 const CONVERSION_TYPES = [
-	["Base 10", bytes_to_base10],
-	["Base 2", bytes_to_base2],
-	["Base 8", bytes_to_base8],
-	["Base 16", bytes_to_base16],
+	["Base 10", bytes_to_base10, null],
+	["Base 2", bytes_to_base2, null],
+	["Base 8", bytes_to_base8, null],
+	["Base 16", bytes_to_base16, null],
 
 	[SEPARATOR],
 
-	["Base64", bytes_to_base64],
+	["Base64", bytes_to_base64, null],
 
 	[SEPARATOR],
 
-	["String", bytes_to_string],
-	["Byte List", bytes_to_bytelist],
+	["UTF-16 String", bytes_to_utf16string, null],
+	["Byte List", bytes_to_bytelist, null],
+
+	//[SEPARATOR],
+
+	["URL encode", bytes_to_urlencode, null],
+	["C Escaped", bytes_to_c_escaped, null],
+
+	["Unicode names", bytes_to_unicode_names, null],
 
 	[SEPARATOR],
 
-	["URL encode", bytes_to_urlencode],
-	["C Escaped", bytes_to_c_escaped],
+	["Unix time", bytes_to_unix, 8],
+	["ISO 8601", bytes_to_unixiso, 8],
 
 	[SEPARATOR],
 
-	["Unix time", bytes_to_unix],
-	["ISO 8601", bytes_to_unixiso],
-
-	[SEPARATOR],
-
-	["Double float", bytes_to_f64],
-	["Single float", bytes_to_f32],
-
-	[SEPARATOR],
-
-
-
-	["i8", bytes_to_i8],
-	["i16", bytes_to_i16],
-	["i32", bytes_to_i32],
-	["i64", bytes_to_i64],
-
-	[SEPARATOR],
-
-	["u8", bytes_to_u8],
-	["u16", bytes_to_u16],
-	["u32", bytes_to_u32],
-	["u64", bytes_to_u64],
+	["Double float", bytes_to_f64, 8],
+	["Single float", bytes_to_f32, 4],
 
 	[SEPARATOR],
 
 
 
-	["IPv6", bytes_to_ipv6],
-	["IPv4", bytes_to_ipv4],
-	["UUID", bytes_to_uuid],
+	["i8", bytes_to_i8, 1],
+	["i16", bytes_to_i16, 2],
+	["i32", bytes_to_i32, 4],
+	["i64", bytes_to_i64, 8],
+
+	[SEPARATOR],
+
+	["u8", bytes_to_u8, 1],
+	["u16", bytes_to_u16, 2],
+	["u32", bytes_to_u32, 4],
+	["u64", bytes_to_u64, 8],
+
+	[SEPARATOR],
+
+
+
+	["IPv4", bytes_to_ipv4, 4],
+	["IPv6", bytes_to_ipv6, 16],
+	["UUID", bytes_to_uuid, 16],
 ];
 
 
@@ -95,30 +97,36 @@ function bytes_to_base16(bytes) {
 	return _bytes_to_bigint(bytes).toString(16)
 }
 
-function bytes_to_string(bytes) {
-	
+function bytes_to_utf16string(bytes) {
 
-	return _bytes_to_string(bytes, true)
-
-}
-
-function _bytes_to_string(bytes, check) {
-	
-	s = new String()
-
-	for (byte of bytes) {
-		if (check == true && !(byte >= 32 && byte < 127)) {
-			throw new FromBytesError(bytes, "string", "String contains unprintable characters (outside 32-126 range)")
-		}
-
-		s += String.fromCharCode(byte)
+	if (bytes.length % 2 != 0) {
+		throw new FromBytesError(bytes, "utf16 string", "Must be an even number of bytes")
 	}
 
-	//
-	bytes_to_bytelist(bytes)
+	uint8arr = new Uint8Array(bytes)
 
-	return utf8.decode(s)
+	uint16arr = new Uint16Array(uint8arr.buffer)
 
+	s = ""
+
+	for (code of uint16arr) {
+		s += (String.fromCharCode(code))
+	}
+
+	return s
+}
+
+function bytes_to_unicode_names(bytes) {
+
+	out = "["
+
+	s = bytes_to_utf16string(bytes)
+
+	for (code of s) {
+		out += get_unicode_name(code.charCodeAt(0)) + " (" + code  + "), "
+	}
+
+	return out + "]"
 }
 
 function bytes_to_bytelist(bytes) {
@@ -134,7 +142,7 @@ function bytes_to_bytelist(bytes) {
 }
 
 function bytes_to_urlencode(bytes) {
-	return encodeURIComponent(_bytes_to_string(bytes, false))
+	return encodeURIComponent(bytes_to_utf16string(bytes, false))
 }
 
 function _bytes_to_ip(bytes, size) {
@@ -143,7 +151,7 @@ function _bytes_to_ip(bytes, size) {
 		throw new FromBytesError(bytes, "ipaddr", "Byte length not supposted (tried " + size + " byte ip against " + bytes.length + " byte list.)" )
 	}
 
-	return ipaddr.fromByteArray(pad_to(bytes, size)).toString()
+	return ipaddr.fromByteArray(bytes).toString()
 
 }
 
@@ -267,7 +275,7 @@ function _bytes_to_primitive(bytes, t, pad) {
 		throw new FromBytesError(bytes, "signed", "Could not convert " + bytes.length + " byte list into " + pad + " byte int")
 	}
 
-	uint8arr = new Uint8Array(pad_to(bytes, pad))
+	uint8arr = new Uint8Array(bytes)
 
 	b = new t(uint8arr.buffer)
 
