@@ -36,7 +36,6 @@ class ToBytesError extends ConversionError {
 
     // Reason for conversion error
     this.input = input;
-    this.date = new Date();
   }
 
 }
@@ -55,6 +54,5 @@ class FromBytesError extends ConversionError {
 
     // Reason for conversion error
     this.bytes = bytes;
-    this.date = new Date();
   }
 }

@@ -11,15 +11,18 @@ const CONVERSION_TYPES = [
 
 	[SEPARATOR],
 
+	["UTF-8 String", bytes_to_utf8string, null],
 	["UTF-16 String", bytes_to_utf16string, null],
 	["Byte List", bytes_to_bytelist, null],
+	["Length", function(bytes) { return "" + bytes.length + " byte(s)" } , null],
 
 	//[SEPARATOR],
 
 	["URL encode", bytes_to_urlencode, null],
 	["C Escaped", bytes_to_c_escaped, null],
 
-	["Unicode names", bytes_to_unicode_names, null],
+	["UTF-16 names", bytes_to_unicode16_names, null],
+	["UTF-8 names", bytes_to_unicode8_names, null],
 
 	[SEPARATOR],
 
@@ -33,7 +36,11 @@ const CONVERSION_TYPES = [
 
 	[SEPARATOR],
 
+	["24-bit rgb", bytes_to_rgb, 3],
+	["HTML Color", bytes_to_htmlcolor, 3],
+	["24-bit color", bytes_to_htmlcolor, 3],
 
+	[SEPARATOR],
 
 	["i8", bytes_to_i8, 1],
 	["i16", bytes_to_i16, 2],
@@ -103,7 +110,7 @@ function bytes_to_utf16string(bytes) {
 		throw new FromBytesError(bytes, "utf16 string", "Must be an even number of bytes")
 	}
 
-	uint8arr = new Uint8Array(bytes)
+	uint8arr = new Uint8Array(bytes) 
 
 	uint16arr = new Uint16Array(uint8arr.buffer)
 
@@ -116,7 +123,11 @@ function bytes_to_utf16string(bytes) {
 	return s
 }
 
-function bytes_to_unicode_names(bytes) {
+function bytes_to_utf8string(bytes) {
+	return new TextDecoder().decode(new Uint8Array(bytes))
+}
+
+function bytes_to_unicode16_names(bytes) {
 
 	out = "["
 
@@ -127,6 +138,14 @@ function bytes_to_unicode_names(bytes) {
 	}
 
 	return out + "]"
+}
+
+function bytes_to_unicode8_names(bytes) {
+	s = new TextDecoder().decode(new Uint8Array(bytes))
+
+
+
+	return bytes_to_unicode16_names(utf16string_to_bytes(s))
 }
 
 function bytes_to_bytelist(bytes) {
@@ -172,9 +191,11 @@ function _bytes_to_date(bytes) {
 		throw new FromBytesError(bytes, "date", "Could not convert " + bytes.length + " bytes into date (must be 8 bytes)")
 	}
 
-	big = _bytes_to_bigint(bytes)
+	uint8arr = new Uint8Array(bytes)
 
-	data = new Date(Number(big))
+	b = new BigInt64Array(uint8arr.buffer)
+
+	data = new Date(Number(b[0]))
 
 	if (isNaN(data)) {
 		throw new FromBytesError(bytes, "date", "Invalid date")
@@ -216,6 +237,11 @@ function bytes_to_f32(bytes) {
 }
 
 function bytes_to_uuid(bytes) {
+
+	if (bytes.length != 16) {
+		throw new FromBytesError(bytes, "uuid", "UUID needs less than 16 bytes")
+	}
+
 	hex = bytes_to_base16(bytes, 16)
 
 	if (hex.length < 32) {
@@ -312,4 +338,20 @@ function bytes_to_u32(bytes) {
 
 function bytes_to_u64(bytes) {
 	return _bytes_to_primitive(bytes, BigUint64Array, 8)
+}
+
+function bytes_to_rgb(bytes) {
+	if (bytes.length != 3) {
+		throw new FromBytesError(bytes, "rgb", "24-bit rgb needs exactly 3 bytes")
+	}
+
+	return "rgb(" + bytes[2] + ", " + bytes[1] + ", " + bytes[0] + ")"
+}
+
+function bytes_to_htmlcolor(bytes) {
+	if (bytes.length != 3) {
+		throw new FromBytesError(bytes, "html color", "24-bit color needs exactly 3 bytes")
+	}
+
+	return "#" + bytes[2].toString(16).padStart(2, '0') + bytes[1].toString(16).padStart(2, '0') + bytes[0].toString(16).padStart(2, '0')
 }

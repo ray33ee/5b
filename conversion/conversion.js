@@ -50,7 +50,6 @@ function process_get() {
 			possibility_selected(selected)
 		}
 	}
-
 }
 
 function get_link() {
@@ -109,6 +108,7 @@ function display_possibles() {
 // Used to clear the input box
 function clear_selection() {
 
+
     document.getElementById(INPUT_BOX_ID).value = "";
 
     display_possibles()
@@ -154,8 +154,16 @@ function possibility_selected(possibility) {
 				} else {
 					converted = func(reverse(bytes))
 				}
+			
+				escaped = escapeHTML(converted)
 
-				table += '<tr style="height: 45px;"><td class="u-table-cell">' + name + '</td><td class="u-align-right u-table-cell u-text-palette-1-light-1 u-table-cell-8">' + escapeHTML(converted) + '</td><td class="u-table-cell"><img src="./images/copy.png" onclick="copy_data(\'' + converted + '\')"></td></tr>'
+				if (name == "24-bit color") {
+					inner = "<div style='color:" + escaped + "'><h1>&#9632</h1></div>"
+				} else {
+					inner = escaped
+				}
+
+				table += '<tr style="height: 45px;"><td class="u-table-cell">' + name + '</td><td class="u-align-right u-table-cell u-text-palette-1-light-1 u-table-cell-8">' + inner + '</td><td class="u-table-cell"><img src="./images/copy.png" onclick="copy_data(\'' + converted + '\')"></td></tr>'
 
 				draw_line = true
 			} catch (err) {
