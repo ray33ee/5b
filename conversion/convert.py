@@ -10,9 +10,28 @@ index = 0
 
 count = 0
 
+thing = [[0, 4, 20, 33, 44, 63, 70, 81, ], [8], [81, 89, 105, 123, ], [1], [123, 143, ]]
+stuff = "NULLSTART OF HEADINGSTART OF TEXTEND OF TEXTEND OF TRANSMISSIONENQUIRYACKNOWLEDGESHIFT INDATA LINK ESCAPEDEVICE CONTROL ONEDEVICE CONTROL THREE"
+
+def get_ith(i):
+	for seg in thing:
+		seg_size = seg.__len__() - 1 if seg.__len__() > 1 else seg[0]
+
+		if i < seg_size:
+			if seg.__len__() > 1:
+				return stuff[slice(seg[i], seg[i+1])]
+			else:
+				return None
+
+		i = i - seg_size
+
+for i in range(20):
+	print(get_ith(i))
+
+
 with open(unicode_indices, "wt") as i_file:
 
-	i_file.write("UNICODE_INDICES_LIST = [0, ")
+	i_file.write("UNICODE_INDICES_LIST = [[0, ")
 
 	with open(unicode_names, "wt") as n_file:
 
@@ -29,8 +48,13 @@ with open(unicode_indices, "wt") as i_file:
 				items = line.split(';')
 
 				if (count != int(items[0], 16)):
-					for i in range(int(items[0], 16) - count):
-						i_file.write(str(index) + ", ")
+
+					diff = int(items[0], 16) - count
+
+					i_file.write("], [" + str(diff) + "], [" + str(index) + ", ")
+					print(int(items[0], 16) - count)
+					for i in range(diff):
+						#i_file.write(str(index) + ", ")
 						count += 1
 				
 
@@ -48,6 +72,6 @@ with open(unicode_indices, "wt") as i_file:
 
 		n_file.write("\"")
 
-	i_file.write("]")
+	i_file.write("]]")
 
 

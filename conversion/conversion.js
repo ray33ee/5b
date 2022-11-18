@@ -10,7 +10,6 @@ const CONVERSIONS_CONTAINER_ID = "conversions"
 
 const SEPARATOR = "__SEPARATOR__"
 
-
 var $_GET = {};
 
 //Courtesy of https://www.ideasandpixels.com/articles/get-post-variables-with-javascript/
@@ -50,6 +49,9 @@ function process_get() {
 			possibility_selected(selected)
 		}
 	}
+
+
+
 }
 
 function get_link() {
@@ -71,18 +73,33 @@ function copy_data(data) {
 	navigator.clipboard.writeText(data);
 }
 
+
 function get_unicode_name(code) {
-	lookup = UNICODE_NAME_LIST.slice(UNICODE_INDICES_LIST[code], UNICODE_INDICES_LIST[code+1])
-	if (lookup == "") {
-		return "unknown"
-	} else {
-		return lookup
+
+	for (seg of UNICODE_INDICES_LIST) {
+		seg_size = null
+
+		if (seg.length > 1) {
+			seg_size = seg.length - 1
+		} else {
+			seg_size = seg[0]
+		}
+
+		if (code < seg_size) {
+			if (seg.length > 1) {
+				return UNICODE_NAME_LIST.slice(seg[code], seg[code+1])
+			} else {
+				return "unknown"
+			}
+		}
+
+		code = code - seg_size
 	}
 }
 
 function display_possibles() {
 
-		selected_type = null
+	selected_type = null
 
     document.getElementById(CONVERSIONS_CONTAINER_ID).innerHTML = "";
 
@@ -100,7 +117,7 @@ function display_possibles() {
 
     for (p of input)
     {
-      document.getElementById(POSSIBLE_LIST_ID).innerHTML += "<h6 id=\"" + p + "\" onmouseover=\"highlight('" + p + "')\" onclick=\"possibility_selected('" + p + "')\">" + p + "</h6>";
+      document.getElementById(POSSIBLE_LIST_ID).innerHTML += "<h6 id=\"" + p + "\" style=\"cursor:default\" onmouseover=\"highlight('" + p + "')\" onclick=\"possibility_selected('" + p + "')\">" + p + "</h6>";
     }
     
 }
@@ -163,7 +180,7 @@ function possibility_selected(possibility) {
 					inner = escaped
 				}
 
-				table += '<tr style="height: 45px;"><td class="u-table-cell">' + name + '</td><td class="u-align-right u-table-cell u-text-palette-1-light-1 u-table-cell-8">' + inner + '</td><td class="u-table-cell"><img src="./images/copy.png" onclick="copy_data(\'' + converted + '\')"></td></tr>'
+				table += '<tr style="height: 45px;"><td class="u-table-cell">' + name + '</td><td class="u-align-right u-table-cell u-text-palette-1-light-1 u-table-cell-8">' + inner + '</td><td class="u-table-cell"><img src="./images/copy.png" style="cursor:pointer" onclick="copy_data(\'' + converted + '\')"></td></tr>'
 
 				draw_line = true
 			} catch (err) {
@@ -197,7 +214,7 @@ function possibility_selected(possibility) {
 
 //Highlight the ID and remove the highlight from all other entries
 function highlight(id) {
-	const highlight_color = "#000000";
+	const highlight_color = "#848c99";
 	const non_highlight_color = "#555c66";
 
 	p_list = document.getElementById(POSSIBLE_LIST_ID)
