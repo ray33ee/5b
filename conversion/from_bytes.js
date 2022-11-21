@@ -11,18 +11,20 @@ const CONVERSION_TYPES = [
 
 	[SEPARATOR],
 
+
 	["UTF-8 String", bytes_to_utf8string, null],
+	["UTF-8 names", bytes_to_unicode8_names, null],
+	
 	["UTF-16 String", bytes_to_utf16string, null],
+	["UTF-16 names", bytes_to_unicode16_names, null],
+
+	[SEPARATOR],
+
 	["Byte List", bytes_to_bytelist, null],
 	["Length", function(bytes) { return "" + bytes.length + " byte(s)" } , null],
 
-	//[SEPARATOR],
-
 	["URL encode", bytes_to_urlencode, null],
 	["C Escaped", bytes_to_c_escaped, null],
-
-	["UTF-16 names", bytes_to_unicode16_names, null],
-	["UTF-8 names", bytes_to_unicode8_names, null],
 
 	[SEPARATOR],
 

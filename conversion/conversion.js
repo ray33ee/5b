@@ -7,6 +7,7 @@ bytes = null
 const POSSIBLE_LIST_ID = "posiblity_list"
 const INPUT_BOX_ID = "input"
 const CONVERSIONS_CONTAINER_ID = "conversions"
+const URL_ID = "url"
 
 const SEPARATOR = "__SEPARATOR__"
 
@@ -120,11 +121,12 @@ function display_possibles() {
       document.getElementById(POSSIBLE_LIST_ID).innerHTML += "<h6 id=\"" + p + "\" style=\"cursor:default\" onmouseover=\"highlight('" + p + "')\" onclick=\"possibility_selected('" + p + "')\">" + p + "</h6>";
     }
     
+		document.getElementById(URL_ID).innerHTML = get_link()
+    
 }
 
 // Used to clear the input box
 function clear_selection() {
-
 
     document.getElementById(INPUT_BOX_ID).value = "";
 
@@ -145,6 +147,8 @@ function possibility_selected(possibility) {
 	table = '<div class="u-align-center u-table u-table-responsive u-table-2"><table style="table-layout: fixed; width: 100%" ><colgroup><col width="25.87%"><col width="70.13%"></colgroup><tbody class="u-table-body">'
 
 	draw_line = false
+
+	document.getElementById(URL_ID).innerHTML = get_link()
 
 	for (conversion_type of CONVERSION_TYPES) {
 		name = conversion_type[0]
@@ -180,7 +184,7 @@ function possibility_selected(possibility) {
 					inner = escaped
 				}
 
-				table += '<tr style="height: 45px;"><td class="u-table-cell">' + name + '</td><td class="u-align-right u-table-cell u-text-palette-1-light-1 u-table-cell-8">' + inner + '</td><td class="u-table-cell"><img src="./images/copy.png" style="cursor:pointer" onclick="copy_data(\'' + converted + '\')"></td></tr>'
+				table += '<tr style="height: 45px;"><td class="u-table-cell">' + name + '</td><td style="overflow-wrap:break-word" class="u-align-right u-table-cell u-text-palette-1-light-1 u-table-cell-8">' + inner + '</td><td class="u-table-cell"><img src="./images/copy.png" style="cursor:pointer" onclick="copy_data(\'' + converted + '\')"></td></tr>'
 
 				draw_line = true
 			} catch (err) {
