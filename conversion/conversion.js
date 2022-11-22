@@ -175,6 +175,7 @@ function possibility_selected(possibility) {
 				} else {
 					converted = func(reverse(bytes))
 				}
+
 			
 				escaped = escapeHTML(converted)
 
@@ -234,35 +235,22 @@ function highlight(id) {
 
 //Reverse the bytes, only if the endianness requires it though
 function reverse(bytes) {
-	a = []
-
-	//Create a deep copy of bytes
-	for (i=0; i < bytes.length; i++) {
-		a.push(bytes[i])
-	}
-
-	return a
+	return bytes
 }
 
 //Add padding zero bytes to array up to 'to' bytes
 function pad(bytes, to) {
 
-	a = []
+	if (bytes.length < to) {
+		copy = new Uint8Array(to)
 
-	//Create a deep copy of bytes
-	for (b of bytes) {
-		a.push(b)
-	}
-
-	// Pad bytes if needed
-	if (a.length < to) {
-		diff = to - a.length
-		for (i = 0; i < diff; i++) {
-			a.push(0)
+		for (i=0; i < bytes.length; i++) {
+			copy[i] = bytes[i]
 		}
+		return bytes
+	} else {
+		return bytes
 	}
-
-	return a
 }
 
 

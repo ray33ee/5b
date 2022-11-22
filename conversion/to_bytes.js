@@ -11,16 +11,17 @@ const RGB_COLOR_REGEX = /[rR][gG][bB]\((?<red>[0-9]+),(?<green>[0-9]+),(?<blue>[
 // Note: The order of this list is important as it is designed such that the more used conversions are listed first.
 // Since dictionaries aren't guaranteed to preserve order, a list of pairs is used instead 
 const POSSIBLE_TYPES = [
-	["Base64", base64_to_bytes, false],
 	["Integer", integer_to_bytes, true],
-	["UTF-8 String", uft8string_to_bytes, false],
-	["UTF-16 String", utf16string_to_bytes, false],
-	["URL Decode", urldecode_to_bytes, false],
-	["Double float", f64_to_bytes, false],
-	["Single float", f32_to_bytes, false],
 	["Base2", base2_to_bytes, true],
 	["Base8", base8_to_bytes, true],
 	["Base16", base16_to_bytes, true],
+	["UTF-8 String", uft8string_to_bytes, false],
+	["UTF-16 String", utf16string_to_bytes, false],
+	["Base64", base64_to_bytes, false],
+	["Base85", base85_to_bytes, false],
+	["Double float", f64_to_bytes, false],
+	["Single float", f32_to_bytes, false],
+	["URL Decode", urldecode_to_bytes, false],
 	["IPv4", ipv4_to_bytes, false],
 	["IPv6", ipv6_to_bytes, false],
 	["Byte List", bytelist_to_bytes, false],
@@ -56,13 +57,27 @@ function base64_to_bytes(string) {
 		throw new ToBytesError(string, "base64", String(err))
 	}
 
-	array = []
+	array = new Uint8Array(decode.length)
 
-	for (byte of decode) {
-		array.push(byte.charCodeAt(0))
+	view = new DataView(array.buffer)
+
+	for (i=0;i<decode.length;i++) {
+		view.setUint8(i, decode[i].charCodeAt(0))
 	}
 
 	return array;
+}
+
+
+function base85_to_bytes(string) {
+
+	arr = ascii85.toByteArray(string)
+
+	if (arr.length == 0) {
+		throw new ToBytesError(string, "base85", "Invalid base85 string")
+	}
+
+	return arr
 }
 
 function integer_to_bytes(string) {
@@ -73,7 +88,7 @@ function integer_to_bytes(string) {
 	}
 
 	if (i == 0n) {
-		return [0]
+		return new Uint8Array([0])
 	}
 
 	if (i < 0n) {
@@ -87,7 +102,7 @@ function integer_to_bytes(string) {
 		i = i >> 8n
 	}
 
-	return array
+	return new Uint8Array(array)
 }
 
 function base2_to_bytes(string) {
@@ -103,19 +118,19 @@ function base16_to_bytes(string) {
 }
 
 function utf16string_to_bytes(string) {
-	array = []
+	array = new Uint8Array(string.length * 2)
 
-	for (char of string) {
-		array.push(char.charCodeAt(0))
+	view = new DataView(array.buffer)
+
+	for (i=0;i<string.length;i++) {
+		view.setUint16(i*2, string[i].charCodeAt(0), true)
 	}
 
-	a = new Uint16Array(array)
-
-	return Array.from(new Uint8Array(a.buffer))
+	return array
 }
 
 function uft8string_to_bytes(string) {
-	return Array.from(new TextEncoder().encode(string))
+	return new TextEncoder().encode(string)
 }
 
 function urldecode_to_bytes(string) {
@@ -129,24 +144,11 @@ function urldecode_to_bytes(string) {
 }
 
 function f64_to_bytes(string) {
-	return _float_to_bytes(string, Float64Array)
+	return _generic_primitive_to_bytes(string, Number, "setFloat64", 8)
 }
 
 function f32_to_bytes(string) {
-	return _float_to_bytes(string, Float32Array)
-}
-
-function _float_to_bytes(string, type) {
-	f = Number(string)
-
-	if (isNaN(f) && string != "NaN") {
-		throw new ToBytesError(string, "float", "Invalid float")
-	}
-
-	var fa = new type(1);
-	fa[0] = f;
-
-	return Array.from(new Uint8Array(fa.buffer))
+	return _generic_primitive_to_bytes(string, Number, "setFloat32",  4)
 }
 
 function ipv4_to_bytes(string) {
@@ -162,7 +164,7 @@ function _ipaddr_to_bytes(string, type) {
 		throw  new ToBytesError(string, "ipaddr", "String is not a valid address")
 	}
 	
-	return ipaddr.parse(string).toByteArray()
+	return new Uint8Array(ipaddr.parse(string).toByteArray())
 }
 
 function bytelist_to_bytes(string) {
@@ -184,24 +186,12 @@ function bytelist_to_bytes(string) {
 		arr.push(n)
 	}
 	
-	return arr
+	return new Uint8Array(arr)
 }
 
 function datetime_to_bytes(string) {
-	epoch = Date.parse(string)
 
-	if (isNaN(epoch)) {
-		throw new ToBytesError(string, "date", "String is not a valid date")
-	}
-
-	thing = new BigInt64Array(1)
-	thing[0] = BigInt(epoch)
-
-
-	arr = Array.from(new Uint8Array(thing.buffer))
-
-
-	return arr
+	return _generic_primitive_to_bytes(string, (s) => BigInt(Date.parse(s)), "setBigInt64", 8)
 
 }
 
@@ -215,72 +205,70 @@ function uuid_to_bytes(string) {
 	}
 }
 
-function _primitive_to_bytes(string, t) {
-	n = Number(string)
 
 
-
-	if (isNaN(n)) {
-		throw new ToBytesError(string, "primitive", "Invalid primitive")
+function _generic_primitive_to_bytes(string, func, t, size) {
+	try {
+		n = func(string)
+	} catch (err) {
+		throw new ToBytesError(string, "primitive", String(err))
 	}
 
-	b = new t(1)
-	b[0] = n
+	if (typeof(n) !== "bigint") {
+		if (isNaN(n) && string != "NaN") {
+			throw new ToBytesError(string, "primitive", "Invalid primitive")
+		}
+	}
+
+	b = new Uint8Array(size)
+
+	v = new DataView(b.buffer)
+
+	v[t](0, n, true)
 
 
-	return Array.from(new Uint8Array(b.buffer))
+
+	return b
+}
+
+function _primitive_to_bytes(string, t, size) {
+	return _generic_primitive_to_bytes(string, Number, t, size)
+}
+
+function _big_primitive_to_bytes(string, t) {
+	return _generic_primitive_to_bytes(string, BigInt, t, 8)
 }
 
 function i8_to_bytes(string) {
-	return _primitive_to_bytes(string, Int8Array)
+	return _primitive_to_bytes(string, "setInt8", 1)
 }
 
 function i16_to_bytes(string) {
-	return _primitive_to_bytes(string, Int16Array)
+	return _primitive_to_bytes(string, "setInt16", 2)
 }
 
 function i32_to_bytes(string) {
-	return _primitive_to_bytes(string, Int32Array)
+	return _primitive_to_bytes(string, "setInt32", 4)
 }
 
 function i64_to_bytes(string) {
-	try {
-		n = BigInt(string)
-	} catch (err) {
-		throw new ToBytesError(string, "i64", String(err))
-	}
-
-	b = new BigInt64Array(1)
-	b[0] = n
-
-
-	return Array.from(new Uint8Array(b.buffer))
+	return _big_primitive_to_bytes(string, "setBigInt64")
 }
 
 function u8_to_bytes(string) {
-	return _primitive_to_bytes(string, Uint8Array)
+	return _primitive_to_bytes(string, "setUint8", 1)
 }
 
 function u16_to_bytes(string) {
-	return _primitive_to_bytes(string, Uint16Array)
+	return _primitive_to_bytes(string, "setUint16", 2)
 }
 
 function u32_to_bytes(string) {
-	return _primitive_to_bytes(string, Uint32Array)
+	return _primitive_to_bytes(string, "setUint32", 4)
 }
 
 function u64_to_bytes(string) {
-	try {
-		n = BigInt(string)
-	} catch (err) {
-		throw new ToBytesError(string, "u64", String(err))
-	}
-
-	b = new BigUint64Array(1)
-	b[0] = n
-
-
-	return Array.from(new Uint8Array(b.buffer))
+	return _big_primitive_to_bytes(string, "setBigUint64")
 }
 
 function c_escaped_to_bytes(string) {
@@ -380,7 +368,7 @@ function c_escaped_to_bytes(string) {
 		}
  	}
 
-	return output
+	return new Uint8Array(output)
 }
 
 function htmlcolor_to_bytes(string) {
@@ -389,7 +377,7 @@ function htmlcolor_to_bytes(string) {
 	if (result == null) {
 		throw new ToBytesError(string, "html color", "Does not match html color regex")
 	} else {
-		return u32_to_bytes("0x" + result["groups"]["code"]).slice(0,3)
+		return new Uint8Array(u32_to_bytes("0x" + result["groups"]["code"]).buffer.slice(0,3))
 	}
 }
 
@@ -417,7 +405,7 @@ function rgbcolor_to_bytes(string) {
 			}
 		}
 
-		return bytes
+		return new Uint8Array(bytes)
 	}
 }
 

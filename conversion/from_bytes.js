@@ -8,6 +8,8 @@ const CONVERSION_TYPES = [
 	[SEPARATOR],
 
 	["Base64", bytes_to_base64, null],
+	["Base85", bytes_to_base85, null],
+	["Base91", bytes_to_base91, null],
 
 	[SEPARATOR],
 
@@ -21,7 +23,10 @@ const CONVERSION_TYPES = [
 	[SEPARATOR],
 
 	["Byte List", bytes_to_bytelist, null],
-	["Length", function(bytes) { return "" + bytes.length + " byte(s)" } , null],
+	["Hex List", bytes_to_hexlist, null],
+	["Length", (bytes) => "" + bytes.length + " byte(s)" , null],
+	
+	[SEPARATOR],
 
 	["URL encode", bytes_to_urlencode, null],
 	["C Escaped", bytes_to_c_escaped, null],
@@ -78,6 +83,21 @@ function bytes_to_base64(bytes) {
 	return btoa(s)
 }
 
+function bytes_to_base85(bytes) {
+
+	return ascii85.fromByteArray(bytes, true)
+}
+
+function bytes_to_base91(bytes) {
+	s = new String()
+
+	for (byte of bytes) {
+		s += String.fromCharCode(byte)
+	}
+
+	return base91.encode(s)
+}
+
 function _bytes_to_bigint(bytes) {
 	multiplier = 1n
 	big = 0n
@@ -112,9 +132,7 @@ function bytes_to_utf16string(bytes) {
 		throw new FromBytesError(bytes, "utf16 string", "Must be an even number of bytes")
 	}
 
-	uint8arr = new Uint8Array(bytes) 
-
-	uint16arr = new Uint16Array(uint8arr.buffer)
+	uint16arr = new Uint16Array(bytes.buffer)
 
 	s = ""
 
@@ -126,7 +144,7 @@ function bytes_to_utf16string(bytes) {
 }
 
 function bytes_to_utf8string(bytes) {
-	return new TextDecoder().decode(new Uint8Array(bytes))
+	return new TextDecoder().decode(bytes.buffer)
 }
 
 function bytes_to_unicode16_names(bytes) {
@@ -143,18 +161,18 @@ function bytes_to_unicode16_names(bytes) {
 }
 
 function bytes_to_unicode8_names(bytes) {
-	s = new TextDecoder().decode(new Uint8Array(bytes))
+	s = new TextDecoder().decode(bytes.buffer)
 
 
 
 	return bytes_to_unicode16_names(utf16string_to_bytes(s))
 }
 
-function bytes_to_bytelist(bytes) {
+function _bytes_to_list(bytes, base, prefix) {
 	s = "["
 
 	for (byte of bytes) {
-		s += byte.toString(10) + ", "
+		s += prefix + byte.toString(base) + ", "
 	}
 
 	s += "]"
@@ -162,8 +180,16 @@ function bytes_to_bytelist(bytes) {
 	return s
 }
 
+function bytes_to_bytelist(bytes) {
+	return _bytes_to_list(bytes, 10, "")
+}
+
+function bytes_to_hexlist(bytes) {
+	return _bytes_to_list(bytes, 16, "0x")
+}
+
 function bytes_to_urlencode(bytes) {
-	return encodeURIComponent(bytes_to_utf16string(bytes, false))
+	return encodeURIComponent(bytes_to_utf8string(bytes))
 }
 
 function _bytes_to_ip(bytes, size) {
@@ -189,15 +215,7 @@ function bytes_to_ipv6(bytes) {
 
 function _bytes_to_date(bytes) {
 
-	if (bytes.length != 8) {
-		throw new FromBytesError(bytes, "date", "Could not convert " + bytes.length + " bytes into date (must be 8 bytes)")
-	}
-
-	uint8arr = new Uint8Array(bytes)
-
-	b = new BigInt64Array(uint8arr.buffer)
-
-	data = new Date(Number(b[0]))
+	data = new Date(Number(_bytes_to_primitive(bytes, "getBigInt64", 8)))
 
 	if (isNaN(data)) {
 		throw new FromBytesError(bytes, "date", "Invalid date")
@@ -215,27 +233,24 @@ function bytes_to_unixiso(bytes) {
 	return _bytes_to_date(bytes).toISOString()
 }
 
-function _bytes_to_float(bytes, t, size) {
-
+function _bytes_to_primitive(bytes, t, size) {
 	if (bytes.length != size) {
-		throw new FromBytesError(bytes, "date", "Could not convert " + bytes.length + " bytes into " + size + " byte float")
+		throw new FromBytesError(bytes, "primitive", "Could not convert " + bytes.length + " bytes into " + size + " byte float")
 	}
 
-	uint8arr = new Uint8Array(bytes)
+	view = new DataView(bytes.buffer)
 
-	f = new t(uint8arr.buffer)
-
-	return f[0].toString()
+	return view[t](0, true)
 }
 
 function bytes_to_f64(bytes) {
 
-	return _bytes_to_float(bytes, Float64Array, 8)
+	return _bytes_to_primitive(bytes, "getFloat64", 8).toString()
 }
 
 function bytes_to_f32(bytes) {
 
-	return _bytes_to_float(bytes, Float32Array,4)
+	return _bytes_to_primitive(bytes, "getFloat32", 4).toString()
 }
 
 function bytes_to_uuid(bytes) {
@@ -297,49 +312,36 @@ function bytes_to_md5(bytes) {
 	return md5(bytes)
 }
 
-function _bytes_to_primitive(bytes, t, pad) {
-
-	if (pad != bytes.length) {
-		throw new FromBytesError(bytes, "signed", "Could not convert " + bytes.length + " byte list into " + pad + " byte int")
-	}
-
-	uint8arr = new Uint8Array(bytes)
-
-	b = new t(uint8arr.buffer)
-
-	return b[0].toString()
-}
-
 function bytes_to_i8(bytes) {
-	return _bytes_to_primitive(bytes, Int8Array, 1)
+	return _bytes_to_primitive(bytes, "getInt8", 1).toString()
 }
 
 function bytes_to_i16(bytes) {
-	return _bytes_to_primitive(bytes, Int16Array, 2)
+	return _bytes_to_primitive(bytes, "getInt16", 2).toString()
 }
 
 function bytes_to_i32(bytes) {
-	return _bytes_to_primitive(bytes, Int32Array, 4)
+	return _bytes_to_primitive(bytes, "getInt32", 4).toString()
 }
 
 function bytes_to_i64(bytes) {
-	return _bytes_to_primitive(bytes, BigInt64Array, 8)
+	return _bytes_to_primitive(bytes, "getBigInt64", 8).toString()
 }
 
 function bytes_to_u8(bytes) {
-	return _bytes_to_primitive(bytes, Uint8Array, 1)
+	return _bytes_to_primitive(bytes, "getUint8", 1).toString()
 }
 
 function bytes_to_u16(bytes) {
-	return _bytes_to_primitive(bytes, Uint16Array, 2)
+	return _bytes_to_primitive(bytes, "getUint16", 2).toString()
 }
 
 function bytes_to_u32(bytes) {
-	return _bytes_to_primitive(bytes, Uint32Array, 4)
+	return _bytes_to_primitive(bytes, "getUint32", 4).toString()
 }
 
 function bytes_to_u64(bytes) {
-	return _bytes_to_primitive(bytes, BigUint64Array, 8)
+	return _bytes_to_primitive(bytes, "getBigUint64", 8).toString()
 }
 
 function bytes_to_rgb(bytes) {
