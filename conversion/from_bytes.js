@@ -47,6 +47,9 @@ const CONVERSION_TYPES = [
 	["HTML Color", bytes_to_htmlcolor, 3],
 	["24-bit color", bytes_to_htmlcolor, 3],
 
+	["16-bit color", bytes_to_highcolor, 2],
+	["16-bit rgb", bytes_to_highcolor_rgb, 2],
+
 	[SEPARATOR],
 
 	["i8", bytes_to_i8, 1],
@@ -342,6 +345,30 @@ function bytes_to_u32(bytes) {
 
 function bytes_to_u64(bytes) {
 	return _bytes_to_primitive(bytes, "getBigUint64", 8).toString()
+}
+
+function _bytes_to_highcolor_array(bytes) {
+	short = _bytes_to_primitive(bytes, "getUint16", 2)
+
+	b = short & 0x1f
+	g = (short >> 5) & 0x3f
+	r = (short >> 11) & 0x1f
+
+	arr = new Uint8Array(3)
+
+	arr[0] = b / 32.0 * 255
+	arr[1] = g / 64.0 * 255
+	arr[2] = r / 32.0 * 255
+
+	return arr
+}
+
+function bytes_to_highcolor(bytes) {
+	return bytes_to_htmlcolor(_bytes_to_highcolor_array(bytes))
+}
+
+function bytes_to_highcolor_rgb(bytes) {
+	return bytes_to_rgb(_bytes_to_highcolor_array(bytes))
 }
 
 function bytes_to_rgb(bytes) {

@@ -6,6 +6,7 @@
     <meta name="description" content="">
     <title>5b</title>
     <link rel="stylesheet" href="nicepage.css" media="screen">
+    <link rel="stylesheet" href="extra.css" media="screen">
 <link rel="stylesheet" href="5b.css" media="screen">
     <script class="u-script" type="text/javascript" src="jquery.js" defer=""></script>
     <script class="u-script" type="text/javascript" src="nicepage.js" defer=""></script>
@@ -71,7 +72,20 @@
     <section class="u-clearfix u-palette-5-dark-3 u-section-1" id="sec-bc3f">
       <div class="u-clearfix u-sheet u-sheet-1">
         <div class="u-container-style u-group u-palette-5-dark-2 u-radius-21 u-shape-round u-group-1">
-          <div class="u-container-layout u-container-layout-1"><span class="u-file-icon u-icon u-text-palette-5-light-1 u-icon-1"><img src="images/2976286-e398cdc1.png" alt=""></span>
+          <div class="u-container-layout u-container-layout-1"><span class="u-file-icon u-icon u-text-palette-5-light-1 u-icon-1">
+
+            <div class="dropdown">
+            <img src="./images/icons8-menu-vertical-96.png" ></button>
+            <div class="dropdown-content">
+              <a onclick="clear_selection()">Clear</a>
+              <a onclick="reverse_show()">Reverse Bytes</a>
+              <a onclick="remove_whitespace()">Remove Whitespace</a>
+              <a onclick="copy_url()">Copy URL</a>
+              <a>Load File...</a>
+            </div>
+          </div>
+
+          </span>
             <div class="u-align-left u-clearfix u-custom-html u-custom-html-1">
               <textarea id="input" name="input" oninput="display_possibles()" rows="1" cols="35" placeholder="hello world!" style="background-color:#555c66;border: 0px;font-family: Roboto;color:#f000000;font-size: 25px;resize:none"></textarea>
             </div>
@@ -87,7 +101,6 @@
         <div class="u-container-style u-group u-palette-5-dark-3 u-radius-21 u-shape-round u-group-1">
           <div id="conversions" class="u-container-layout u-container-layout-1"></div>
         </div>
-        <h6 id="url" class="u-align-center u-text u-text-default u-text-1"></h6>
       </div>
     </section>
     
@@ -103,8 +116,9 @@
       <a class="u-link" href="" target="_blank">
         <span>Web Design Software</span>
       </a>. 
-    </section>
-
-    <script>process_get()</script>
+    </section><span class="u-back-to-top u-block-457c-8 u-icon u-icon-circle u-opacity u-opacity-85 u-palette-1-base" data-href="#">
+        <svg class="u-svg-link" preserveAspectRatio="xMidYMin slice" viewBox="0 0 551.13 551.13"><use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#svg-309a"></use></svg>
+        <svg class="u-svg-content" enable-background="new 0 0 551.13 551.13" viewBox="0 0 551.13 551.13" xmlns="http://www.w3.org/2000/svg" id="svg-309a"><path d="m275.565 189.451 223.897 223.897h51.668l-275.565-275.565-275.565 275.565h51.668z"></path></svg>
+    </span>
   
 </body></html>

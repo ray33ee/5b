@@ -134,7 +134,15 @@
 }
 
 .u-section-2 .u-text-1 {
-  margin: 30px auto 60px;
+  margin: 30px auto 0;
+}
+
+.u-block-457c-8 {
+  height: 64px;
+  width: 64px;
+  background-image: none;
+  margin: -381px 0 60px;
+  padding: 15px;
 }
 
 @media (max-width: 1199px) {

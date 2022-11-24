@@ -19,6 +19,7 @@ const POSSIBLE_TYPES = [
 	["UTF-16 String", utf16string_to_bytes, false],
 	["Base64", base64_to_bytes, false],
 	["Base85", base85_to_bytes, false],
+	["Base91", base91_to_bytes, false],
 	["Double float", f64_to_bytes, false],
 	["Single float", f32_to_bytes, false],
 	["URL Decode", urldecode_to_bytes, false],
@@ -68,10 +69,31 @@ function base64_to_bytes(string) {
 	return array;
 }
 
+function base91_to_bytes(string) {
+	try {
+		decode = base91.decode(string)
+	} catch (err) {
+		throw new ToBytesError(string, "base91", String(err))
+	}
+
+	array = new Uint8Array(decode.length)
+
+	view = new DataView(array.buffer)
+
+	for (i=0;i<decode.length;i++) {
+		view.setUint8(i, decode[i].charCodeAt(0))
+	}
+
+	return array;
+}
 
 function base85_to_bytes(string) {
 
-	arr = ascii85.toByteArray(string)
+	try {
+		arr = ascii85.toByteArray(string)
+	} catch (err) {
+		throw new ToBytesError(string, "base85", String(err))
+	}
 
 	if (arr.length == 0) {
 		throw new ToBytesError(string, "base85", "Invalid base85 string")

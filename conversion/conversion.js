@@ -4,10 +4,11 @@ selected_type = null
 // A Uint8Array representing the underlying type
 bytes = null
 
+reverse = false
+
 const POSSIBLE_LIST_ID = "posiblity_list"
 const INPUT_BOX_ID = "input"
 const CONVERSIONS_CONTAINER_ID = "conversions"
-const URL_ID = "url"
 
 const SEPARATOR = "__SEPARATOR__"
 
@@ -37,21 +38,27 @@ const escapeHTML = str =>
   );
 
 function process_get() {
+
 	if ("input" in $_GET) {
 		input = $_GET["input"]
 
 		document.getElementById(INPUT_BOX_ID).value = input
 
+
 		display_possibles()
 
 		if ("selected" in $_GET && input != "") {
 
+
+
+			if ("reverse" in $_GET) {
+				reverse = $_GET["reverse"] == "true" ? true : false
+			}
+
 			selected = $_GET["selected"]
-			possibility_selected(selected)
+			display_conversions(selected)
 		}
 	}
-
-
 
 }
 
@@ -66,6 +73,8 @@ function get_link() {
 		}
 
 	}
+
+	params += "&reverse=" + reverse
 
 	return params
 }
@@ -121,7 +130,7 @@ function display_possibles() {
       document.getElementById(POSSIBLE_LIST_ID).innerHTML += "<h6 id=\"" + p + "\" style=\"cursor:default\" onmouseover=\"highlight('" + p + "')\" onclick=\"possibility_selected('" + p + "')\">" + p + "</h6>";
     }
     
-		document.getElementById(URL_ID).innerHTML = get_link()
+	reverse = false
     
 }
 
@@ -133,8 +142,33 @@ function clear_selection() {
     display_possibles()
 }
 
-//Called when the onclick even is raised in the items in the possibilities list
-function possibility_selected(possibility) {
+function remove_whitespace() {
+
+	input = document.getElementById(INPUT_BOX_ID)
+	val = input.value;
+
+	input.value = val.replace(/\s/g, '')
+
+  display_possibles()
+}
+
+function reverse_show() {
+
+	if (selected_type != null) {
+		reverse = true
+
+		display_conversions(selected_type)
+
+
+	}
+
+}
+
+function copy_url() {
+	navigator.clipboard.writeText(get_link())
+}
+
+function display_conversions(possibility) {
 
 	for (possible_type of POSSIBLE_TYPES) {
 		if (possibility === possible_type[0]) {
@@ -144,11 +178,10 @@ function possibility_selected(possibility) {
 
 	bytes = selected_type[1](document.getElementById(INPUT_BOX_ID).value)
 
+
 	table = '<div class="u-align-center u-table u-table-responsive u-table-2"><table style="table-layout: fixed; width: 100%" ><colgroup><col width="25.87%"><col width="70.13%"></colgroup><tbody class="u-table-body">'
 
 	draw_line = false
-
-	document.getElementById(URL_ID).innerHTML = get_link()
 
 	for (conversion_type of CONVERSION_TYPES) {
 		name = conversion_type[0]
@@ -171,15 +204,15 @@ function possibility_selected(possibility) {
 
 				if (selected_type[2] == true && pad != null) {
 
-					converted = func(reverse(pad(bytes, pad_to)))
+					converted = func(reverse_bytes(pad(bytes, pad_to)))
 				} else {
-					converted = func(reverse(bytes))
+					converted = func(reverse_bytes(bytes))
 				}
 
 			
 				escaped = escapeHTML(converted)
 
-				if (name == "24-bit color") {
+				if (name == "24-bit color" || name == "16-bit color") {
 					inner = "<div style='color:" + escaped + "'><h1>&#9632</h1></div>"
 				} else {
 					inner = escaped
@@ -213,7 +246,15 @@ function possibility_selected(possibility) {
 	conversions_container.scrollIntoView()
 
 	document.getElementById(CONVERSIONS_CONTAINER_ID).style.backgroundColor  = "#555c66"
-	
+}
+
+//Called when the onclick even is raised in the items in the possibilities list
+function possibility_selected(possibility) {
+
+	reverse = false
+
+	display_conversions(possibility)
+
   	
 }
 
@@ -234,12 +275,26 @@ function highlight(id) {
 }
 
 //Reverse the bytes, only if the endianness requires it though
-function reverse(bytes) {
-	return bytes
+function reverse_bytes(bytes) {
+	if (reverse) {
+
+
+		a = new Uint8Array(bytes.length)
+
+		for (i = 0; i < bytes.length; i++) {
+			a[i] = bytes[bytes.length - i - 1]
+		}
+
+		return a
+
+	} else {
+		return bytes
+	}
 }
 
 //Add padding zero bytes to array up to 'to' bytes
 function pad(bytes, to) {
+
 
 	if (bytes.length < to) {
 		copy = new Uint8Array(to)
@@ -247,7 +302,8 @@ function pad(bytes, to) {
 		for (i=0; i < bytes.length; i++) {
 			copy[i] = bytes[i]
 		}
-		return bytes
+
+		return copy
 	} else {
 		return bytes
 	}

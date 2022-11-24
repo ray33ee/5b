@@ -1,0 +1,11 @@
+
+          <div class="dropdown">
+            <img src="./images/icons8-menu-vertical-96.png" ></button>
+            <div class="dropdown-content">
+              <a onclick="clear_selection()">Clear</a>
+              <a onclick="reverse_show()">Reverse Bytes</a>
+              <a onclick="remove_whitespace()">Remove Whitespace</a>
+              <a onclick="copy_url()">Copy URL</a>
+              <a>Load File...</a>
+            </div>
+          </div>
