@@ -6,6 +6,9 @@ bytes = null
 
 reverse = false
 
+escaped_map = new Map()	
+raw_map = new Map()
+
 const POSSIBLE_LIST_ID = "posiblity_list"
 const INPUT_BOX_ID = "input"
 const CONVERSIONS_CONTAINER_ID = "conversions"
@@ -38,6 +41,7 @@ const escapeHTML = str =>
   );
 
 function process_get() {
+
 
 	if ("input" in $_GET) {
 		input = $_GET["input"]
@@ -79,8 +83,8 @@ function get_link() {
 	return params
 }
 
-function copy_data(data) {
-	navigator.clipboard.writeText(data);
+function copy_data(name) {
+	navigator.clipboard.writeText(raw_map.get(name));
 }
 
 
@@ -168,6 +172,24 @@ function copy_url() {
 	navigator.clipboard.writeText(get_link())
 }
 
+function see_less(tag) {
+	content = document.getElementById("content_" + tag)
+
+	content.innerHTML = escaped_map.get(tag).slice(0, 200) + '<div onclick="see_more(\'' + tag + '\')">See more...</div>'
+
+	content.scrollIntoView()
+}
+
+function see_more(tag) {
+	content = document.getElementById("content_" + tag)
+
+	content.innerHTML = escaped_map.get(tag) + '<div onclick="see_less(\'' + tag + '\')">See less</div>'
+
+	content.scrollIntoView()
+}
+
+
+
 function display_conversions(possibility) {
 
 	for (possible_type of POSSIBLE_TYPES) {
@@ -178,15 +200,23 @@ function display_conversions(possibility) {
 
 	bytes = selected_type[1](document.getElementById(INPUT_BOX_ID).value)
 
+	raw_map.clear()
+	escaped_map.clear()
+
 
 	table = '<div class="u-align-center u-table u-table-responsive u-table-2"><table style="table-layout: fixed; width: 100%" ><colgroup><col width="25.87%"><col width="70.13%"></colgroup><tbody class="u-table-body">'
 
 	draw_line = false
 
+	var count = 0
+
 	for (conversion_type of CONVERSION_TYPES) {
 		name = conversion_type[0]
 		func = conversion_type[1]
 		pad_to = conversion_type[2]
+
+
+		shortened = false
 
 		if (conversion_type.length == 1 && conversion_type[0] == SEPARATOR) {
 
@@ -198,7 +228,6 @@ function display_conversions(possibility) {
 				table += '<hr>'
 				draw_line = false
 			}
-			//table += '<tr style="height: 45px;"><td class="u-table-cell"></td><td class="u-table-cell"><hr></td></tr>'
 		} else {
 			try {
 
@@ -209,6 +238,8 @@ function display_conversions(possibility) {
 					converted = func(reverse_bytes(bytes))
 				}
 
+
+				raw_map.set(name, converted)
 			
 				escaped = escapeHTML(converted)
 
@@ -218,9 +249,36 @@ function display_conversions(possibility) {
 					inner = escaped
 				}
 
-				table += '<tr style="height: 45px;"><td class="u-table-cell">' + name + '</td><td style="overflow-wrap:break-word" class="u-align-right u-table-cell u-text-palette-1-light-1 u-table-cell-8">' + inner + '</td><td class="u-table-cell"><img src="./images/copy.png" style="cursor:pointer" onclick="copy_data(\'' + converted + '\')"></td></tr>'
+				escaped_map.set(name, inner)
+
+				if (inner.length > 200) {
+					inner = inner.slice(0, 200)
+					shortened = true
+				}
+
+				var alternate
+
+				if (count % 2 == 0) {
+					alternate = ""
+				} else {
+					alternate = "background-color:#656d7a"
+				}
+
+				if (shortened) {
+					elipse = '<div onclick="see_more(\'' + name + '\')">See more...</div>'
+				} else {
+					elipse = ""
+				}
+
+				if (name == "Base85") {
+					console.log(encodeURIComponent(inner.replace("\"", "\\\"")))
+				}
+
+				table += '<tr style="height: 45px; ' + alternate + '"><td class="u-table-cell">' + name + '</td><td id="content_' + name + '" style="overflow-wrap:break-word" class="u-align-right u-table-cell u-text-palette-1-light-1 u-table-cell-8">' + inner + elipse + '</td><td class="u-table-cell"><img src="./images/copy.png" style="cursor:pointer" onclick=\'copy_data("' + name + '")\'></td></tr>'
 
 				draw_line = true
+
+				count += 1
 			} catch (err) {
 
 				//A FromBytesError is fine, it means we cannot convert from that type, so we don't. Any other type of error however is not recoverable

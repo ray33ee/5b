@@ -12,9 +12,9 @@ const RGB_COLOR_REGEX = /[rR][gG][bB]\((?<red>[0-9]+),(?<green>[0-9]+),(?<blue>[
 // Since dictionaries aren't guaranteed to preserve order, a list of pairs is used instead 
 const POSSIBLE_TYPES = [
 	["Integer", integer_to_bytes, true],
-	["Base2", base2_to_bytes, true],
-	["Base8", base8_to_bytes, true],
-	["Base16", base16_to_bytes, true],
+	["Binary", base2_to_bytes, true],
+	["Octal", base8_to_bytes, true],
+	["Hexadecimal", base16_to_bytes, true],
 	["UTF-8 String", uft8string_to_bytes, false],
 	["UTF-16 String", utf16string_to_bytes, false],
 	["Base64", base64_to_bytes, false],
@@ -38,6 +38,7 @@ const POSSIBLE_TYPES = [
 	["u64", u64_to_bytes, true],
 	["HTML color", htmlcolor_to_bytes, true],
 	["RGB color", rgbcolor_to_bytes, true],
+	["Color Name", colorname_to_bytes, false],
 	["C Escaped", c_escaped_to_bytes, false],
 
 ];
@@ -429,5 +430,46 @@ function rgbcolor_to_bytes(string) {
 
 		return new Uint8Array(bytes)
 	}
+}
+
+function colorname_to_bytes(string) {
+
+	// Strip whitespace and force lower case
+	cleaned = string.toLowerCase().replace(/\s/g, "")
+
+	// Binary search 'COLOR_NAMES' list for name
+
+	start = 0
+	end = COLOR_NAMES.length-1
+
+	timeout = 100
+
+	while (true) {
+
+		mid = Math.floor((end + start)/2)
+
+		if (cleaned < COLOR_NAMES[mid]) {
+			end = mid
+		} else {
+			start = mid
+		}
+
+		if (end == start + 1 || timeout == 0) {
+			break
+		}
+
+		timeout -= 1
+	}
+
+	seg = COLOR_NAMES[start+1].split('#')
+
+	if (cleaned == seg[0]) {
+		return htmlcolor_to_bytes("#" + seg[1])
+	} else {
+		throw new ToBytesError(cleaned, "color name", "Color name is not a valid u8")
+	}
+
+
+	
 }
 

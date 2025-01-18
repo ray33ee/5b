@@ -1,9 +1,9 @@
 
 const CONVERSION_TYPES = [
-	["Base 10", bytes_to_base10, null],
-	["Base 2", bytes_to_base2, null],
-	["Base 8", bytes_to_base8, null],
-	["Base 16", bytes_to_base16, null],
+	["Decimal", bytes_to_base10, null],
+	["Binary", bytes_to_base2, null],
+	["Octal", bytes_to_base8, null],
+	["Hexadecimal", bytes_to_base16, null],
 
 	[SEPARATOR],
 
@@ -38,13 +38,14 @@ const CONVERSION_TYPES = [
 
 	[SEPARATOR],
 
-	["Double float", bytes_to_f64, 8],
-	["Single float", bytes_to_f32, 4],
+	["Double float", bytes_to_f64, null],
+	["Single float", bytes_to_f32, null],
 
 	[SEPARATOR],
 
 	["24-bit rgb", bytes_to_rgb, 3],
 	["HTML Color", bytes_to_htmlcolor, 3],
+	["Nearest color name", bytes_to_colorname, 3],
 	["24-bit color", bytes_to_htmlcolor, 3],
 
 	["16-bit color", bytes_to_highcolor, 2],
@@ -386,3 +387,52 @@ function bytes_to_htmlcolor(bytes) {
 
 	return "#" + bytes[2].toString(16).padStart(2, '0') + bytes[1].toString(16).padStart(2, '0') + bytes[0].toString(16).padStart(2, '0')
 }
+
+function color_distance(r1, g1, b1, r2, g2, b2) {
+	return euclid_color_distance(r1, g1, b1, r2, g2, b2)
+}
+
+function euclid_color_distance(r1, g1, b1, r2, g2, b2) {
+	return Math.pow(r2 - r1, 2) + Math.pow(g2 - g1, 2) + Math.pow(b2 - b1, 2)
+}
+
+function bytes_to_colorname(bytes) {
+
+	if (bytes.length != 3) {
+		throw new FromBytesError(bytes, "color name", "color name needs exactly 3 bytes")
+	}
+
+	r1 = bytes[2]
+	g1 = bytes[1]
+	b1 = bytes[0]
+
+	// Maximum possible length plus 1
+	smallest_length = 3 * 255 * 255 + 1
+	smallest_name = ""
+	smallest_html = ""
+
+	//Brute force search of each named color to find the closest
+	for (entry of COLOR_NAMES) {
+		r2 = Number("0x" + entry.slice(-6, -4))
+		g2 = Number("0x" + entry.slice(-4, -2))
+		b2 = Number("0x" + entry.slice(-2, entry.length))
+
+		// If we have an exact match, stop the search
+		if (r1 == r2 && g1 == g2 && b1 == b2) {
+			return entry.slice(0, -7) + " (" + entry.slice(-7, entry.length) + ")"
+		}
+
+		distance = color_distance(r1, g1, b1, r2, g2, b2)
+
+		if (distance < smallest_length) {
+			smallest_length = distance
+			smallest_name = entry.slice(0, -7)
+			smallest_html = entry.slice(-7, entry.length)
+		}
+	}
+
+	return smallest_name + " (" + smallest_html + ")"
+}
+
+
+
