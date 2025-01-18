@@ -167,11 +167,11 @@ function urldecode_to_bytes(string) {
 }
 
 function f64_to_bytes(string) {
-	return _generic_primitive_to_bytes(string, Number, "setFloat64", 8)
+	return _generic_primitive_to_bytes(string, Number, "Float64", 8)
 }
 
 function f32_to_bytes(string) {
-	return _generic_primitive_to_bytes(string, Number, "setFloat32",  4)
+	return _generic_primitive_to_bytes(string, Number, "Float32",  4)
 }
 
 function ipv4_to_bytes(string) {
@@ -214,7 +214,7 @@ function bytelist_to_bytes(string) {
 
 function datetime_to_bytes(string) {
 
-	return _generic_primitive_to_bytes(string, (s) => BigInt(Date.parse(s)), "setBigInt64", 8)
+	return _generic_primitive_to_bytes(string, (s) => BigInt(Date.parse(s)), "BigInt64", 8)
 
 }
 
@@ -247,9 +247,12 @@ function _generic_primitive_to_bytes(string, func, t, size) {
 
 	v = new DataView(b.buffer)
 
-	v[t](0, n, true)
+	v["set" + t](0, n, true)
 
-
+	//Convert the bytes back into a string and compare with original. This allows us to rule out putting large numbers in small primitives (700 does not fit in u8 for example)
+	if (String(v["get" + t](0, true)) != string) {
+		throw new ToBytesError(string, "primitive", "Primitive overflow")
+	}
 
 	return b
 }
@@ -263,35 +266,35 @@ function _big_primitive_to_bytes(string, t) {
 }
 
 function i8_to_bytes(string) {
-	return _primitive_to_bytes(string, "setInt8", 1)
+	return _primitive_to_bytes(string, "Int8", 1)
 }
 
 function i16_to_bytes(string) {
-	return _primitive_to_bytes(string, "setInt16", 2)
+	return _primitive_to_bytes(string, "Int16", 2)
 }
 
 function i32_to_bytes(string) {
-	return _primitive_to_bytes(string, "setInt32", 4)
+	return _primitive_to_bytes(string, "Int32", 4)
 }
 
 function i64_to_bytes(string) {
-	return _big_primitive_to_bytes(string, "setBigInt64")
+	return _big_primitive_to_bytes(string, "BigInt64")
 }
 
 function u8_to_bytes(string) {
-	return _primitive_to_bytes(string, "setUint8", 1)
+	return _primitive_to_bytes(string, "Uint8", 1)
 }
 
 function u16_to_bytes(string) {
-	return _primitive_to_bytes(string, "setUint16", 2)
+	return _primitive_to_bytes(string, "Uint16", 2)
 }
 
 function u32_to_bytes(string) {
-	return _primitive_to_bytes(string, "setUint32", 4)
+	return _primitive_to_bytes(string, "Uint32", 4)
 }
 
 function u64_to_bytes(string) {
-	return _big_primitive_to_bytes(string, "setBigUint64")
+	return _big_primitive_to_bytes(string, "BigUint64")
 }
 
 function c_escaped_to_bytes(string) {
@@ -400,7 +403,7 @@ function htmlcolor_to_bytes(string) {
 	if (result == null) {
 		throw new ToBytesError(string, "html color", "Does not match html color regex")
 	} else {
-		return new Uint8Array(u32_to_bytes("0x" + result["groups"]["code"]).buffer.slice(0,3))
+		return new Uint8Array(u32_to_bytes(Number("0x" + result["groups"]["code"])).buffer.slice(0,3))
 	}
 }
 
@@ -433,6 +436,7 @@ function rgbcolor_to_bytes(string) {
 }
 
 function colorname_to_bytes(string) {
+	console.log("string")
 
 	// Strip whitespace and force lower case
 	cleaned = string.toLowerCase().replace(/\s/g, "")
@@ -461,9 +465,11 @@ function colorname_to_bytes(string) {
 		timeout -= 1
 	}
 
+
 	seg = COLOR_NAMES[start+1].split('#')
 
 	if (cleaned == seg[0]) {
+
 		return htmlcolor_to_bytes("#" + seg[1])
 	} else {
 		throw new ToBytesError(cleaned, "color name", "Color name is not a valid u8")

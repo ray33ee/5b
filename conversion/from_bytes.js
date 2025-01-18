@@ -72,9 +72,16 @@ const CONVERSION_TYPES = [
 	["IPv4", bytes_to_ipv4, 4],
 	["IPv6", bytes_to_ipv6, 16],
 	["UUID", bytes_to_uuid, 16],
+
+	[SEPARATOR],
+
+	["Download", bytes_to_download, null]
 ];
 
 
+function bytes_to_download(bytes) {
+	return ""
+}
 
 //A list of conversions from bytes to string by possible types
 function bytes_to_base64(bytes) {

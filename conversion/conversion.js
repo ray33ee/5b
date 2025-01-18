@@ -42,14 +42,15 @@ const escapeHTML = str =>
 
 function process_get() {
 
+	input = ""
+	reverse = false
+	selected = ""
+
 
 	if ("input" in $_GET) {
 		input = $_GET["input"]
 
-		document.getElementById(INPUT_BOX_ID).value = input
-
-
-		display_possibles()
+		
 
 		if ("selected" in $_GET && input != "") {
 
@@ -60,7 +61,20 @@ function process_get() {
 			}
 
 			selected = $_GET["selected"]
+		}
+	}
+
+
+	if (input != "") {
+		document.getElementById(INPUT_BOX_ID).value = input
+
+
+		display_possibles()
+
+		if (selected != "") {
 			display_conversions(selected)
+
+			possibility_selected(selected)
 		}
 	}
 
@@ -135,6 +149,12 @@ function display_possibles() {
     }
     
 	reverse = false
+
+	if (text != "") {
+		window.history.pushState("object or string", "Title", "?input=" + encodeURIComponent(text));
+	} else {
+		window.history.pushState("object or string", "Title", "?");
+	}
     
 }
 
@@ -164,6 +184,9 @@ function reverse_show() {
 		display_conversions(selected_type)
 
 
+		window.history.pushState("object or string", "Title", "?input=" + encodeURIComponent(document.getElementById(INPUT_BOX_ID).value) + "&reverse=" + reverse + "&selected=" + encodeURIComponent(selected_type));
+
+
 	}
 
 }
@@ -175,7 +198,7 @@ function copy_url() {
 function see_less(tag) {
 	content = document.getElementById("content_" + tag)
 
-	content.innerHTML = escaped_map.get(tag).slice(0, 200) + '<div onclick="see_more(\'' + tag + '\')">See more...</div>'
+	content.innerHTML = escaped_map.get(tag).slice(0, 200) + '<div><a style="cursor:pointer" onclick="see_more(\'' + tag + '\')">See more...</a></div>'
 
 	content.scrollIntoView()
 }
@@ -183,14 +206,28 @@ function see_less(tag) {
 function see_more(tag) {
 	content = document.getElementById("content_" + tag)
 
-	content.innerHTML = escaped_map.get(tag) + '<div onclick="see_less(\'' + tag + '\')">See less</div>'
+	content.innerHTML = escaped_map.get(tag) + '<div><a style="cursor:pointer" onclick="see_less(\'' + tag + '\')">See less.</a></div>'
 
 	content.scrollIntoView()
 }
 
+function click_download() {
+	const blob = new Blob([bytes], {type: 'application/octet-stream'})
+
+	const bytes_file_URL = URL.createObjectURL(blob);
+
+	const downloadLink = document.createElement('a');
+	downloadLink.href = bytes_file_URL;
+	downloadLink.download = 'hash_of_data_unique_name';
+	document.body.appendChild(downloadLink);
+	downloadLink.click();
+
+	URL.revokeObjectURL(bytes_file_URL);
+}
 
 
 function display_conversions(possibility) {
+
 
 	for (possible_type of POSSIBLE_TYPES) {
 		if (possibility === possible_type[0]) {
@@ -245,6 +282,11 @@ function display_conversions(possibility) {
 
 				if (name == "24-bit color" || name == "16-bit color") {
 					inner = "<div style='color:" + escaped + "'><h1>&#9632</h1></div>"
+				} else if (name == "Download") {
+
+					
+
+					inner = "<div><a style='cursor:pointer' onclick='click_download()'>Download</a></div>"
 				} else {
 					inner = escaped
 				}
@@ -265,7 +307,7 @@ function display_conversions(possibility) {
 				}
 
 				if (shortened) {
-					elipse = '<div onclick="see_more(\'' + name + '\')">See more...</div>'
+					elipse = '<div><a style="cursor:pointer" onclick="see_more(\'' + name + '\')">See more...</a></div>'
 				} else {
 					elipse = ""
 				}
@@ -312,6 +354,9 @@ function possibility_selected(possibility) {
 	reverse = false
 
 	display_conversions(possibility)
+
+
+	window.history.pushState("object or string", "Title", "?input=" + encodeURIComponent(document.getElementById(INPUT_BOX_ID).value) + "&reverse=" + reverse + "&selected=" + encodeURIComponent(possibility));
 
   	
 }
