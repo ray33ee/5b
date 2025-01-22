@@ -22,6 +22,7 @@
     <script type="text/javascript" src="./conversion/unicode_indices.js"></script>
     <script type="text/javascript" src="./conversion/base85.js"></script>
     <script type="text/javascript" src="./conversion/base91.js"></script>
+    <script type="text/javascript" src="./conversion/rgb.js"></script>
     <link id="u-theme-google-font" rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:100,100i,300,300i,400,400i,500,500i,700,700i,900,900i|Open+Sans:300,300i,400,400i,500,500i,600,600i,700,700i,800,800i">
     
     
@@ -37,7 +38,7 @@
     <meta property="og:description" content="">
     <meta property="og:type" content="website">
   <link rel="icon" type="image/x-icon" href="./images/default-logo-2.png"></head>
-  <body data-home-page="5b.html" data-home-page-title="5b" class="u-body u-xl-mode" data-lang="en"><header class="u-clearfix u-header u-palette-5-dark-3 u-header" id="sec-7423"><div class="u-clearfix u-sheet u-sheet-1">
+  <body class="u-body u-xl-mode" data-lang="en"><header class="u-clearfix u-header u-palette-5-dark-3 u-header" id="sec-7423"><div class="u-clearfix u-sheet u-sheet-1">
         <a href="5b.html" class="u-image u-logo u-image-1" data-image-width="222" data-image-height="191" title="5b">
           <img src="images/default-logo.png" class="u-logo-image u-logo-image-1">
         </a>
@@ -72,22 +73,10 @@
     <section class="u-clearfix u-palette-5-dark-3 u-section-1" id="sec-bc3f">
       <div class="u-clearfix u-sheet u-sheet-1">
         <div class="u-container-style u-group u-palette-5-dark-2 u-radius-21 u-shape-round u-group-1">
-          <div class="u-container-layout u-container-layout-1"><span class="u-file-icon u-icon u-text-palette-5-light-1 u-icon-1">
+          <div class="u-container-layout u-container-layout-1">
 
-            <div class="dropdown">
-            <img src="./images/icons8-menu-vertical-96.png" ></button>
-            <div class="dropdown-content">
-              <a onclick="clear_selection()">Clear</a>
-              <a onclick="reverse_show()">Reverse Bytes</a>
-              <a onclick="remove_whitespace()">Remove Whitespace</a>
-              <a onclick="copy_url()">Copy URL</a>
-              <a>Load File...</a>
-            </div>
-          </div>
-
-          </span>
             <div class="u-align-left u-clearfix u-custom-html u-custom-html-1">
-              <textarea id="input" name="input" oninput="display_possibles()" rows="1" cols="35" placeholder="hello world!" style="background-color:#555c66;border: 0px;font-family: Roboto;color:#f000000;font-size: 25px;resize:none"></textarea>
+              <textarea id="input" name="input" oninput="display_possibles()" rows="1" placeholder="hello world!" style="background-color:#777c66;border: 0px; font-family: Roboto;color:#f000000;font-size: 25px;resize:none; width:100%; object-fit: contain;"></textarea>
             </div>
             <div class="u-container-style u-group u-shape-rectangle u-group-2">
               <div id="posiblity_list" class="u-container-layout u-container-layout-2"></div>
@@ -103,7 +92,12 @@
         </div>
       </div>
     </section>
-    
+    <span class="u-back-to-top u-block-457c-8 u-icon u-icon-circle u-opacity u-opacity-85 u-palette-1-base" data-href="#">
+        <svg class="u-svg-link" preserveAspectRatio="xMidYMin slice" viewBox="0 0 551.13 551.13"><use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#svg-309a"></use></svg>
+        <svg class="u-svg-content" enable-background="new 0 0 551.13 551.13" viewBox="0 0 551.13 551.13" xmlns="http://www.w3.org/2000/svg" id="svg-309a"><path d="m275.565 189.451 223.897 223.897h51.668l-275.565-275.565-275.565 275.565h51.668z"></path></svg>
+    </span>
+
+    <script type="text/javascript">process_get()</script>
     
     <footer class="u-align-center u-clearfix u-footer u-palette-5-dark-3 u-footer" id="sec-8db2"><div class="u-clearfix u-sheet u-sheet-1"></div></footer>
     <section class="u-backlink u-clearfix u-grey-80">
@@ -116,9 +110,6 @@
       <a class="u-link" href="" target="_blank">
         <span>Web Design Software</span>
       </a>. 
-    </section><script>process_get()</script><span class="u-back-to-top u-block-457c-8 u-icon u-icon-circle u-opacity u-opacity-85 u-palette-1-base" data-href="#">
-        <svg class="u-svg-link" preserveAspectRatio="xMidYMin slice" viewBox="0 0 551.13 551.13"><use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#svg-309a"></use></svg>
-        <svg class="u-svg-content" enable-background="new 0 0 551.13 551.13" viewBox="0 0 551.13 551.13" xmlns="http://www.w3.org/2000/svg" id="svg-309a"><path d="m275.565 189.451 223.897 223.897h51.668l-275.565-275.565-275.565 275.565h51.668z"></path></svg>
-    </span>
+    </section>
   
 </body></html>

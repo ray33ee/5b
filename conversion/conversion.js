@@ -46,6 +46,7 @@ function process_get() {
 	reverse = false
 	selected = ""
 
+	clear_selection()
 
 	if ("input" in $_GET) {
 		input = $_GET["input"]
@@ -80,23 +81,6 @@ function process_get() {
 
 }
 
-function get_link() {
-	params = ""
-	text = document.getElementById(INPUT_BOX_ID).value
-	if (text != "") {
-		params += "?input=" + encodeURIComponent(text)
-
-		if (selected_type != null) {
-			params += "&selected=" + encodeURIComponent(selected_type[0])
-		}
-
-	}
-
-	params += "&reverse=" + reverse
-
-	return params
-}
-
 function copy_data(name) {
 	navigator.clipboard.writeText(raw_map.get(name));
 }
@@ -126,6 +110,15 @@ function get_unicode_name(code) {
 }
 
 function display_possibles() {
+
+	document.getElementById(INPUT_BOX_ID).rows = 1
+	rows = Math.floor((document.getElementById(INPUT_BOX_ID).scrollHeight - 4) / document.getElementById(INPUT_BOX_ID).offsetHeight)+1
+
+	if (rows > 10) {
+		rows = 10
+	}
+
+	document.getElementById(INPUT_BOX_ID).rows = rows
 
 	selected_type = null
 
@@ -191,10 +184,6 @@ function reverse_show() {
 
 }
 
-function copy_url() {
-	navigator.clipboard.writeText(get_link())
-}
-
 function see_less(tag) {
 	content = document.getElementById("content_" + tag)
 
@@ -227,6 +216,7 @@ function click_download() {
 
 
 function display_conversions(possibility) {
+
 
 
 	for (possible_type of POSSIBLE_TYPES) {
@@ -312,10 +302,6 @@ function display_conversions(possibility) {
 					elipse = ""
 				}
 
-				if (name == "Base85") {
-					console.log(encodeURIComponent(inner.replace("\"", "\\\"")))
-				}
-
 				table += '<tr style="height: 45px; ' + alternate + '"><td class="u-table-cell">' + name + '</td><td id="content_' + name + '" style="overflow-wrap:break-word" class="u-align-right u-table-cell u-text-palette-1-light-1 u-table-cell-8">' + inner + elipse + '</td><td class="u-table-cell"><img src="./images/copy.png" style="cursor:pointer" onclick=\'copy_data("' + name + '")\'></td></tr>'
 
 				draw_line = true
@@ -355,6 +341,7 @@ function possibility_selected(possibility) {
 
 	display_conversions(possibility)
 
+	highlight(possibility)
 
 	window.history.pushState("object or string", "Title", "?input=" + encodeURIComponent(document.getElementById(INPUT_BOX_ID).value) + "&reverse=" + reverse + "&selected=" + encodeURIComponent(possibility));
 
@@ -372,6 +359,9 @@ function highlight(id) {
 		child.style.backgroundColor = non_highlight_color
 	}
 
+	if (selected_type != null) {
+		document.getElementById(selected_type[0]).style.backgroundColor = '#656d7a'
+	}
 
 	document.getElementById(id).style.backgroundColor = highlight_color
 

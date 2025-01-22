@@ -29,7 +29,7 @@ const CONVERSION_TYPES = [
 	[SEPARATOR],
 
 	["URL encode", bytes_to_urlencode, null],
-	["C Escaped", bytes_to_c_escaped, null],
+	["C/Python Escaped", bytes_to_c_escaped, null],
 
 	[SEPARATOR],
 
@@ -67,15 +67,18 @@ const CONVERSION_TYPES = [
 
 	[SEPARATOR],
 
-
-
 	["IPv4", bytes_to_ipv4, 4],
 	["IPv6", bytes_to_ipv6, 16],
 	["UUID", bytes_to_uuid, 16],
 
 	[SEPARATOR],
 
-	["Download", bytes_to_download, null]
+	["MD5", bytes_to_md5, null],
+	//["SHA256", bytes_to_sha256, null],
+
+	[SEPARATOR],
+
+	["Download", bytes_to_download, null],
 ];
 
 
@@ -321,6 +324,10 @@ function bytes_to_c_escaped(bytes) {
 
 function bytes_to_md5(bytes) {
 	return md5(bytes)
+}
+
+function bytes_to_sha256(bytes) {
+	return sha256(bytes)
 }
 
 function bytes_to_i8(bytes) {

@@ -214,7 +214,13 @@ function bytelist_to_bytes(string) {
 
 function datetime_to_bytes(string) {
 
-	return _generic_primitive_to_bytes(string, (s) => BigInt(Date.parse(s)), "BigInt64", 8)
+	parsed = Date.parse(string)
+
+	if (isNaN(parsed)) {
+		throw new ToBytesError(string, "date/time", "String is not a valid or supported date/time format")
+	}
+
+	return u64_to_bytes(BigInt(parsed))
 
 }
 
@@ -436,7 +442,6 @@ function rgbcolor_to_bytes(string) {
 }
 
 function colorname_to_bytes(string) {
-	console.log("string")
 
 	// Strip whitespace and force lower case
 	cleaned = string.toLowerCase().replace(/\s/g, "")
