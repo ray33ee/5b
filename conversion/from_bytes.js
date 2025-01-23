@@ -24,7 +24,7 @@ const CONVERSION_TYPES = [
 
 	["Byte List", bytes_to_bytelist, null],
 	["Hex List", bytes_to_hexlist, null],
-	["Length", (bytes) => "" + bytes.length + " byte(s)" , null],
+	["Length", bytes_to_length, null],
 	
 	[SEPARATOR],
 
@@ -47,6 +47,7 @@ const CONVERSION_TYPES = [
 	["HTML Color", bytes_to_htmlcolor, 3],
 	["Nearest color name", bytes_to_colorname, 3],
 	["24-bit color", bytes_to_htmlcolor, 3],
+	["HSV(0-360, 0-100, 0-100)", bytes_to_hsv, 3],
 
 	["16-bit color", bytes_to_highcolor, 2],
 	["16-bit rgb", bytes_to_highcolor_rgb, 2],
@@ -81,6 +82,14 @@ const CONVERSION_TYPES = [
 	["Download", bytes_to_download, null],
 ];
 
+
+function bytes_to_length(bytes) {
+	if (bytes.length == 1) {
+		return "1 byte"
+	} else {
+		return bytes.length + " bytes"
+	}
+}
 
 function bytes_to_download(bytes) {
 	return ""
@@ -400,6 +409,42 @@ function bytes_to_htmlcolor(bytes) {
 	}
 
 	return "#" + bytes[2].toString(16).padStart(2, '0') + bytes[1].toString(16).padStart(2, '0') + bytes[0].toString(16).padStart(2, '0')
+}
+
+function bytes_to_hsv(bytes) {
+
+	if (bytes.length != 3) {
+		throw new FromBytesError(bytes, "hsv color", "hsv color needs exactly 3 bytes")
+	}
+
+	r = bytes[2] / 255.0
+	g = bytes[1] / 255.0
+	b = bytes[0] / 255.0
+
+
+	v = Math.max(r, g, b)
+
+	c = v - Math.min(r, g, b)
+
+	l = v - c / 2
+
+	if (c == 0) {
+		h = 0
+	} else if (v == r) {
+		h = (360 + 60 * ((g - b) / c)) % 360
+	} else if (v == g) {
+		h = 60 * ((b-r) / c + 2)
+	} else if (v == b) {
+		h = 60 * ((r-g) / c + 4)
+	}
+
+	if (v == 0) {
+		s = 0
+	} else {
+		s = c / v
+	}
+
+	return "hsv(" + Math.floor(h) + ", " + Math.floor(s*100) + ", " + Math.floor(v*100) + ")"
 }
 
 function color_distance(r1, g1, b1, r2, g2, b2) {

@@ -70,7 +70,7 @@ function process_get() {
 		document.getElementById(INPUT_BOX_ID).value = input
 
 
-		display_possibles()
+		display_possibles(null)
 
 		if (selected != "") {
 			display_conversions(selected)
@@ -79,6 +79,61 @@ function process_get() {
 		}
 	}
 
+}
+
+function uploadfileDropHandler(ev) {
+  console.log("File(s) dropped");
+
+  // Prevent default behavior (Prevent file from being opened)
+  ev.preventDefault();
+
+  f = null
+
+  if (ev.dataTransfer.items) {
+    // Use DataTransferItemList interface to access the file(s)
+    [...ev.dataTransfer.items].forEach((item, i) => {
+      // If dropped items aren't files, reject them
+      if (item.kind === "file") {
+        const file = item.getAsFile();
+        f = file
+      }
+    });
+  } else {
+    // Use DataTransfer interface to access the file(s)
+    [...ev.dataTransfer.files].forEach((file, i) => {
+      f = file
+    });
+  }
+
+  if (f != null) {
+
+  	reader = new FileReader()
+
+  	reader.readAsBinaryString(f);
+
+	  reader.onload = function() {
+	    sttring_result = reader.result
+
+	    //Convert bytes to base64 string
+			b64 = btoa(sttring_result)
+
+	    //Insert base64 string into input box, clearing it first
+	    document.getElementById(INPUT_BOX_ID).value = b64
+
+	    //Select 'Base64' as the selected type
+	    display_possibles("Base64")
+	    display_conversions("Base64")
+	  };
+  }
+
+}
+
+
+function uploadfileDragOverHandler(ev) {
+  console.log("File(s) in drop zone");
+
+  // Prevent default behavior (Prevent file from being opened)
+  ev.preventDefault();
 }
 
 function copy_data(name) {
@@ -109,37 +164,47 @@ function get_unicode_name(code) {
 	}
 }
 
-function display_possibles() {
+function adjust_rows() {
 
 	document.getElementById(INPUT_BOX_ID).rows = 1
-	rows = Math.floor((document.getElementById(INPUT_BOX_ID).scrollHeight - 4) / document.getElementById(INPUT_BOX_ID).offsetHeight)+1
 
-	if (rows > 10) {
-		rows = 10
+	rows = 1
+
+	while (document.getElementById(INPUT_BOX_ID).offsetHeight < document.getElementById(INPUT_BOX_ID).scrollHeight && rows < 10) {
+
+		document.getElementById(INPUT_BOX_ID).rows = rows
+		rows = rows + 1
 	}
+}
 
-	document.getElementById(INPUT_BOX_ID).rows = rows
+function display_possibles(optional_type) {
+
+	adjust_rows()
 
 	selected_type = null
 
-    document.getElementById(CONVERSIONS_CONTAINER_ID).innerHTML = "";
+  document.getElementById(CONVERSIONS_CONTAINER_ID).innerHTML = "";
 
-    text = document.getElementById(INPUT_BOX_ID).value
+  text = document.getElementById(INPUT_BOX_ID).value
 
-    input = possibilities(text);
+  if (optional_type == null) {
+  	input = possibilities(text);
+	} else {
+		input = [optional_type]
+	}
 
-		document.getElementById(CONVERSIONS_CONTAINER_ID).style.backgroundColor  = "#292d33"
-	
-		if (text != "") {
-    	document.getElementById(POSSIBLE_LIST_ID).innerHTML = "<hr>";
-		} else {
-			document.getElementById(POSSIBLE_LIST_ID).innerHTML = ""
-		}
+	document.getElementById(CONVERSIONS_CONTAINER_ID).style.backgroundColor  = "#292d33"
 
-    for (p of input)
-    {
-      document.getElementById(POSSIBLE_LIST_ID).innerHTML += "<h6 id=\"" + p + "\" style=\"cursor:default\" onmouseover=\"highlight('" + p + "')\" onclick=\"possibility_selected('" + p + "')\">" + p + "</h6>";
-    }
+	if (text != "") {
+  	document.getElementById(POSSIBLE_LIST_ID).innerHTML = "<hr>";
+	} else {
+		document.getElementById(POSSIBLE_LIST_ID).innerHTML = ""
+	}
+
+  for (p of input)
+  {
+    document.getElementById(POSSIBLE_LIST_ID).innerHTML += "<h6 id=\"" + p + "\" style=\"cursor:default\" onmouseover=\"highlight('" + p + "')\" onclick=\"possibility_selected('" + p + "')\">" + p + "</h6>";
+  }
     
 	reverse = false
 
@@ -156,7 +221,7 @@ function clear_selection() {
 
     document.getElementById(INPUT_BOX_ID).value = "";
 
-    display_possibles()
+    display_possibles(null)
 }
 
 function remove_whitespace() {
@@ -166,7 +231,7 @@ function remove_whitespace() {
 
 	input.value = val.replace(/\s/g, '')
 
-  display_possibles()
+  display_possibles(null)
 }
 
 function reverse_show() {

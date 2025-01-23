@@ -6,6 +6,7 @@ const BYTE_LIST_ELEMENT_REGEX = /(?<number>(?:0[obx])?[0-9A-Fa-f]+),?/g
 const UUID_REGEX = /[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}/
 const HTML_COLOR_REGEX = /[#](?<code>[0-9A-Fa-f]{6})/
 const RGB_COLOR_REGEX = /[rR][gG][bB]\((?<red>[0-9]+),(?<green>[0-9]+),(?<blue>[0-9]+)\)/
+const HSV_COLOR_REGEX = /[hH][sS][vV]\((?<hue>[0-9]+),(?<saturation>[0-9]+),(?<value>[0-9]+)\)/
 
 // Here we create a possible type map from name to conversion function.
 // Note: The order of this list is important as it is designed such that the more used conversions are listed first.
@@ -38,6 +39,7 @@ const POSSIBLE_TYPES = [
 	["u64", u64_to_bytes, true],
 	["HTML color", htmlcolor_to_bytes, true],
 	["RGB color", rgbcolor_to_bytes, true],
+	["HSV color", hsvcolor_to_bytes, true],
 	["Color Name", colorname_to_bytes, false],
 	["C Escaped", c_escaped_to_bytes, false],
 
@@ -439,6 +441,70 @@ function rgbcolor_to_bytes(string) {
 
 		return new Uint8Array(bytes)
 	}
+}
+
+function hsvcolor_to_bytes(string) {
+
+	s = string.replace(/\s/g, '')
+
+	result = HSV_COLOR_REGEX.exec(s)
+
+	if (result == null) {
+		throw new ToBytesError(s, "hsv color", "Does not match hsv format")
+	}
+
+	h = Number(result["groups"]["hue"])
+	s = Number(result["groups"]["saturation"]) / 100.0
+	v = Number(result["groups"]["value"]) / 100.0
+
+	c = v * s
+
+	h2 = h / 60
+
+	x = c * (1 - Math.abs(h2 % 2 - 1))
+
+	m = v - c
+
+	switch (Math.floor(h2)) {
+		case 0:
+			r = c + m
+			g = x + m
+			b = m
+			break;
+		case 1:
+			r = x + m
+			g = c + m
+			b = m
+			break;
+		case 2:
+			r = m
+			g = c + m
+			b = x + m
+			break;
+		case 3:
+			r = m
+			g = x + m
+			b = c + m
+			break;
+		case 4:
+			r = x + m
+			g = m
+			b = c + m
+			break;
+		case 5:
+			r = c + m
+			g = m
+			b = x + m
+			break;
+	}
+
+	bytes = []
+
+	bytes.push(b*255)
+	bytes.push(g*255)
+	bytes.push(r*255)
+
+	return new Uint8Array(bytes)
 }
 
 function colorname_to_bytes(string) {
