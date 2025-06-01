@@ -79,12 +79,11 @@
 
 
           <div id="file_drop" ondragover="uploadfileDragOverHandler(event)" ondrop="uploadfileDropHandler(event)" class="u-container-layout u-container-layout-1">
-
-            <div class="u-align-left u-clearfix u-custom-html u-custom-html-1">
-              <textarea id="input" name="input" oninput="display_possibles(null)" rows="1" placeholder="Type or drag and drop files here" style="background-color:#777c66;border: 0px; font-family: Roboto;color:#f000000;font-size: 25px;resize:none; width:100%; object-fit: contain;"></textarea>
-            </div>
-            <div class="u-container-style u-group u-shape-rectangle u-group-2">
-              <div id="posiblity_list" class="u-container-layout u-container-layout-2"></div>
+            <div class="rounded-rectangle">
+              <div class="centered-content">
+                <textarea id="input" name="input" oninput="display_possibles(null)" rows="1" placeholder="Type or drag and drop files here"></textarea>
+                <div id="posiblity_list"></div>
+              </div>
             </div>
           </div>
         </div>

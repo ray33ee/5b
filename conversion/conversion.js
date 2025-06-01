@@ -1,4 +1,3 @@
-
 selected_type = null
 
 // A Uint8Array representing the underlying type
@@ -16,6 +15,7 @@ const CONVERSIONS_CONTAINER_ID = "conversions"
 const SEPARATOR = "__SEPARATOR__"
 
 var $_GET = {};
+var isNavigating = false;
 
 //Courtesy of https://www.ideasandpixels.com/articles/get-post-variables-with-javascript/
 document.location.search.replace(/\??(?:([^=]+)=([^&]*)&?)/g, function () {
@@ -24,6 +24,22 @@ document.location.search.replace(/\??(?:([^=]+)=([^&]*)&?)/g, function () {
     }
 
     $_GET[decode(arguments[1])] = decode(arguments[2]);
+});
+
+// Handle browser back/forward navigation
+window.addEventListener('popstate', function(event) {
+    isNavigating = true;
+    // Clear and rebuild $_GET from the new URL
+    $_GET = {};
+    document.location.search.replace(/\??(?:([^=]+)=([^&]*)&?)/g, function () {
+        function decode(s) {
+            return decodeURIComponent(s.split("+").join(" "));
+        }
+        $_GET[decode(arguments[1])] = decode(arguments[2]);
+    });
+    // Update page based on new URL
+    process_get();
+    isNavigating = false;
 });
 
 // Courtesy of https://www.30secondsofcode.org/js/s/escape-html
@@ -208,10 +224,12 @@ function display_possibles(optional_type) {
     
 	reverse = false
 
-	if (text != "") {
-		window.history.pushState("object or string", "Title", "?input=" + encodeURIComponent(text));
-	} else {
-		window.history.pushState("object or string", "Title", "?");
+	if (!isNavigating) {
+		if (text != "") {
+			window.history.pushState("object or string", "Title", "?input=" + encodeURIComponent(text));
+		} else {
+			window.history.pushState("object or string", "Title", "?");
+		}
 	}
     
 }
@@ -266,13 +284,27 @@ function see_more(tag) {
 }
 
 function click_download() {
-	const blob = new Blob([bytes], {type: 'application/octet-stream'})
+	// Compute a unique hash for the bytes and type
+	let type = selected_type ? selected_type[0] : "unknown";
+	let hash_input = new Uint8Array(bytes.length + type.length);
+	hash_input.set(bytes, 0);
+	for (let i = 0; i < type.length; i++) {
+		hash_input[bytes.length + i] = type.charCodeAt(i);
+	}
+	// Use _sha256 from sha256.js (assumed to be loaded globally)
+	let hash = typeof _sha256 === 'function' ? _sha256(hash_input) : "hash";
+	// Format the hash with a '-' after every 10 characters
+	let formatted_hash = hash.replace(/(.{6})/g, '$1-').replace(/-$/, '');
+	let truncated_hash = formatted_hash.slice(0, 31);
+	let filename = `5b-${truncated_hash}.bin`;
 
+	const blob = new Blob([bytes], {type: 'application/octet-stream'});
 	const bytes_file_URL = URL.createObjectURL(blob);
 
 	const downloadLink = document.createElement('a');
 	downloadLink.href = bytes_file_URL;
-	downloadLink.download = 'hash_of_data_unique_name';
+	downloadLink.download = filename;
+	downloadLink.setAttribute('data-hash', hash);
 	document.body.appendChild(downloadLink);
 	downloadLink.click();
 
@@ -367,7 +399,7 @@ function display_conversions(possibility) {
 					elipse = ""
 				}
 
-				table += '<tr style="height: 45px; ' + alternate + '"><td class="u-table-cell">' + name + '</td><td id="content_' + name + '" style="overflow-wrap:break-word" class="u-align-right u-table-cell u-text-palette-1-light-1 u-table-cell-8">' + inner + elipse + '</td><td class="u-table-cell"><img src="./images/copy.png" style="cursor:pointer" onclick=\'copy_data("' + name + '")\'></td></tr>'
+				table += '<tr style="height: 45px; ' + alternate + '"><td class="u-table-cell">' + name + '</td><td id="content_' + name + '" style="overflow-wrap:break-word" class="u-align-right u-table-cell u-text-palette-1-light-1 u-table-cell-8">' + inner + elipse + '</td><td class="u-table-cell copy-icon-cell" style="width:48px;"><img src="./images/copy.png" style="cursor:pointer;display:block;margin:0 auto;" onclick=\'copy_data("' + name + '")\'></td></tr>'
 
 				draw_line = true
 
@@ -408,9 +440,11 @@ function possibility_selected(possibility) {
 
 	highlight(possibility)
 
-	window.history.pushState("object or string", "Title", "?input=" + encodeURIComponent(document.getElementById(INPUT_BOX_ID).value) + "&reverse=" + reverse + "&selected=" + encodeURIComponent(possibility));
+	if (!isNavigating) {
+		window.history.pushState("object or string", "Title", "?input=" + encodeURIComponent(document.getElementById(INPUT_BOX_ID).value) + "&reverse=" + reverse + "&selected=" + encodeURIComponent(possibility));
+	}
 
-  	
+   	
 }
 
 //Highlight the ID and remove the highlight from all other entries

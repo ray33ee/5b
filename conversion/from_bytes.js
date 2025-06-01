@@ -1,4 +1,3 @@
-
 const CONVERSION_TYPES = [
 	["Decimal", bytes_to_base10, null],
 	["Binary", bytes_to_base2, null],
@@ -19,6 +18,9 @@ const CONVERSION_TYPES = [
 	
 	["UTF-16 String", bytes_to_utf16string, null],
 	["UTF-16 names", bytes_to_unicode16_names, null],
+
+	["Non-ascii count", bytes_to_non_ascii_count, null],
+
 
 	[SEPARATOR],
 
@@ -75,7 +77,7 @@ const CONVERSION_TYPES = [
 	[SEPARATOR],
 
 	["MD5", bytes_to_md5, null],
-	//["SHA256", bytes_to_sha256, null],
+	["SHA256", bytes_to_sha256, null],
 
 	[SEPARATOR],
 
@@ -87,7 +89,7 @@ function bytes_to_length(bytes) {
 	if (bytes.length == 1) {
 		return "1 byte"
 	} else {
-		return bytes.length + " bytes"
+		return bytes.length.toLocaleString() + " bytes"
 	}
 }
 
@@ -168,6 +170,19 @@ function bytes_to_utf16string(bytes) {
 
 function bytes_to_utf8string(bytes) {
 	return new TextDecoder().decode(bytes.buffer)
+}
+
+
+function bytes_to_non_ascii_count(bytes) {
+	count = 0
+
+	for (byte of bytes) {
+		if (byte > 127) {
+			count++
+		}
+	}
+
+	return count + " non-ascii bytes"
 }
 
 function bytes_to_unicode16_names(bytes) {
@@ -336,7 +351,7 @@ function bytes_to_md5(bytes) {
 }
 
 function bytes_to_sha256(bytes) {
-	return sha256(bytes)
+	return _sha256(bytes)
 }
 
 function bytes_to_i8(bytes) {
@@ -492,6 +507,4 @@ function bytes_to_colorname(bytes) {
 
 	return smallest_name + " (" + smallest_html + ")"
 }
-
-
 

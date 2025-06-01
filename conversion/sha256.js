@@ -499,15 +499,15 @@
   };
 
   var exports = createMethod();
-  exports.sha256 = exports;
+  exports._sha256 = exports;
   exports.sha224 = createMethod(true);
-  exports.sha256.hmac = createHmacMethod();
+  exports._sha256.hmac = createHmacMethod();
   exports.sha224.hmac = createHmacMethod(true);
 
   if (COMMON_JS) {
     module.exports = exports;
   } else {
-    root.sha256 = exports.sha256;
+    root._sha256 = exports._sha256;
     root.sha224 = exports.sha224;
     if (AMD) {
       define(function () {

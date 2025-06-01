@@ -1,4 +1,4 @@
- .u-section-1 {
+.u-section-1 {
   background-image: none;
 }
 
@@ -8,10 +8,12 @@
 
 .u-section-1 .u-group-1 {
   width: 800px;
-  min-height: 73px;
+  min-height: unset;
   height: auto;
   background-image: none;
   margin: 25px auto 36px;
+  padding: 0;
+  display: block;
 }
 
 .u-section-1 .u-container-layout-1 {
@@ -27,9 +29,10 @@
 }
 
 .u-section-1 .u-custom-html-1 {
-  height: auto;
-  min-height: 51px;
-  margin: -39px 101px 0 50px;
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0;
+  overflow: visible;
 }
 
 .u-section-1 .u-group-2 {
@@ -42,6 +45,29 @@
 .u-section-1 .u-container-layout-2 {
   padding-left: 0;
   padding-right: 0;
+}
+
+.rounded-rectangle {
+  background: #555c66;
+  border-radius: 21px;
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto 16px auto;
+  box-sizing: border-box;
+}
+
+#input {
+  width: 100%;
+  box-sizing: border-box;
+  border: none;
+  background: #555c66;
+  color: #fff;
+  font-size: 25px;
+  padding: 16px;
+  margin: 0;
+  resize: none;
+  border-radius: 21px;
+  display: block;
 }
 
 @media (max-width: 1199px) {
@@ -59,7 +85,6 @@
 
   .u-section-1 .u-custom-html-1 {
     margin-top: -23px;
-    width: 649px;
   }
 
   .u-section-1 .u-group-2 {
@@ -90,7 +115,6 @@
   .u-section-1 .u-custom-html-1 {
     margin-left: 0;
     margin-right: 0;
-    width: 540px;
   }
 
   .u-section-1 .u-group-2 {
@@ -110,13 +134,14 @@
 
   .u-section-1 .u-custom-html-1 {
     margin-top: -25px;
-    width: 340px;
   }
 
   .u-section-1 .u-group-2 {
     width: 340px;
   }
-}.u-section-2 .u-sheet-1 {
+}
+
+.u-section-2 .u-sheet-1 {
   min-height: 400px;
 }
 
@@ -171,4 +196,51 @@
   .u-section-2 .u-group-1 {
     width: 340px;
   }
+}
+
+.centered-content {
+  max-width: 600px;
+  margin: 0 auto;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.centered-content > * {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.centered-content hr {
+  margin: 24px 0;
+  border: none;
+  border-top: 1px solid #aaa;
+  width: 100%;
+}
+
+#posiblity_list {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+#conversions {
+  padding-bottom: 32px;
+  overflow: visible;
+}
+
+#conversions td:last-child {
+  padding-right: 40px;
+  text-align: center;
+  min-width: 40px;
+}
+
+.copy-icon-cell {
+  width: 48px;
+  padding-right: 0;
+}
+
+.copy-icon-cell img {
+  display: block;
+  margin: 0 auto;
 }
